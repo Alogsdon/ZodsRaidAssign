@@ -147,6 +147,36 @@ function ZodsRaidAssign.MakeMacros()
 	ZodsRaidAssign.GoleMaggMacro()
 end
 
+function ZodsRaidAssignPublic.parseRaidPost(post)
+	local tanks, ti = {}, ZodsRaidAssign.tank_iter()
+	local heals, hi = {}, ZodsRaidAssign.tank_heal_iter()
+	local locks, li = {}, ZodsRaidAssign.lock_iter()
+	local melee, mi = {}, ZodsRaidAssign.melee_iter()
+	for i = 1,10 do
+		table.insert(tanks, ti())
+		table.insert(heals, hi())
+		table.insert(locks, li())
+		table.insert(melee, mi())
+	end
+	local temp = string.gsub(post, "%%%a+%d", function(str)
+		local pre = string.sub(str, 2, -2)
+		local ind = tonumber(string.sub(str,-1))
+		if pre == "tank" then 
+			return tanks[ind].name
+		elseif pre == "heal" then 
+			return heals[ind].name
+		elseif pre == "lock" then 
+			return locks[ind].name
+		elseif pre == "melee" then 
+			return melee[ind].name
+		else
+			return str
+		end
+	end)
+	return temp
+end
+
+
 function ZodsRaidAssign.BaronMacro()
 end
 
@@ -382,6 +412,17 @@ function ZodsRaidAssign.TankMacro()
 	ZodsRaidAssign.MacroSetBody(i, s)
 end
 
+ZodsRaidAssignPublic.SHAPES = {
+	'{Skull}',
+	'{X}',
+	'{Square}',
+	'{Moon}',
+	'{Triangle}',
+	'{Diamond}',
+	'{Circle}',
+	'{Star}',
+}
+
 function ZodsRaidAssign.CCMacro()
 	local li = ZodsRaidAssign.lock_iter()
 	shapes = {
@@ -450,7 +491,12 @@ function ZodsRaidAssign.BuffMacro()
 end
 
 function ZodsRaidAssign.GetTanks()
-	return shallowcopy(ZRA_vars.raid.tanks)
+	local temp = {}
+	for i,v in ipairs(ZRA_vars.roles[1].columns[1].members) do
+		table.insert(temp,ZRA_vars.roster[v])
+	end
+	
+	return temp
 end
 
 function ZodsRaidAssign.GetHeals()

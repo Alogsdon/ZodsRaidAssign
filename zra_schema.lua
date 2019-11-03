@@ -1,6 +1,7 @@
 
 ZodsRaidAssignPublic = {}
 
+--ZRA_vars.roles 
 ZodsRaidAssignPublic.roleschema = {
     {
         title = "Tanks",
@@ -601,5 +602,58 @@ ZodsRaidAssignPublic.raidschema = {
                 }
             }
         },
+    }
+}
+
+
+--functions
+
+ZodsRaidAssignPublic.funcs = {
+    ['Molten Core'] = {
+        Trash = function() end,
+        Lucifron = function() end,
+        Magmadar = function() end,
+        Gehennas = function() end,
+        Garr = function() 
+            local locks = {}
+            for k,v in pairs(ZRA_vars.roster) do
+                if v.class == "WARLOCK" then
+                    table.insert(locks, v)
+                end
+            end
+            local num_banishes = min(6, #locks)
+            print('assigning ' ..num_banishes .. ' banishes')
+            for i = 1, num_banishes do 
+                ZRA_vars.raids['Molten Core'][5][10-i].columns[1].members = {ZodsRaidAssignPublic.getCodeFromName(locks[i].name)}
+            end
+            for i = 1, (9-num_banishes) do
+            end
+        end,
+        Shazzrah = function() end,
+        Baron = function() end,
+        Golemagg = function() end,
+        Sulfuron = function() end,
+        Majordomo = function() end,
+        Ragnaros = function() end,
+    }
+}
+
+ZodsRaidAssignPublic.announcements = {
+    ['Molten Core'] = {
+        Trash = {
+            "%tank1 tanking {skull}, healed by %heal1, %heal5",
+            "%tank2 tanking {X}, healed by %heal2, %heal4",
+            "%tank3 backup tanking, healed by %heal3",
+        },
+        Lucifron = function() end,
+        Magmadar = function() end,
+        Gehennas = function() end,
+        Garr = function() end,
+        Shazzrah = function() end,
+        Baron = function() end,
+        Golemagg = function() end,
+        Sulfuron = function() end,
+        Majordomo = function() end,
+        Ragnaros = function() end,
     }
 }

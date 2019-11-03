@@ -166,6 +166,8 @@ function ZodsRaidAssign.onLoad()
 	gen_ass_btn:SetHeight(30)
 	gen_ass_btn:SetScript("OnClick", function()
 		print('generating assignments for page')
+		ZodsRaidAssignPublic.funcs[ZodsRaidAssign.current_tab][UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)]()
+		ZodsRaidAssign.showBoss(ZodsRaidAssign.current_tab, UIDropDownMenu_GetSelectedID(ZodsRaidAssign.dropdown))
 	end)
 	gen_ass_btn:Show()
 
@@ -177,6 +179,8 @@ function ZodsRaidAssign.onLoad()
 	post_ass_btn:SetHeight(30)
 	post_ass_btn:SetScript("OnClick", function()
 		print('posting assignments to raid')
+		local phrase = "da MT is %tank1"
+		print(ZodsRaidAssignPublic.parseRaidPost(phrase))
 	end)
 	post_ass_btn:Show()
 
@@ -350,11 +354,10 @@ function ZodsRaidAssign.showAsignee(catcher, player, where)
 		ZodsRaidAssign.pickUpPlayer(f, player)
 	end)
 	f:SetScript('OnEnter', function()
-		GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-		GameTooltip:SetUnit("raid" .. player.raidNum)
-		GameTooltip:Show()
+		ZodsRaidAssign.mouseOverEnter(player)
 	end)
 	f:SetScript('OnLeave', function()
+		ZodsRaidAssign.mouseOverExit(player)
 	end)
 	f:SetPoint("CENTER", catcher, "TOP", 0 , -20 );
 	local color = RAID_CLASS_COLORS[player.class]
@@ -383,6 +386,17 @@ function ZodsRaidAssign.dropAsignee(columnframe, player)
 	end
 end
 
+function ZodsRaidAssign.mouseOverEnter(player)
+	GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+	GameTooltip:SetUnit("raid" .. player.raidNum)
+	GameTooltip:Show()
+
+end
+
+function ZodsRaidAssign.mouseOverExit(player)
+	GameTooltip:FadeOut()
+end
+
 function ZodsRaidAssign.getAnAsigneeFrame()
 	local i  = ZodsRaidAssign.findNotBusyFrame(ZodsRaidAssign.asignee_frames)
 	if i then 
@@ -393,7 +407,7 @@ function ZodsRaidAssign.getAnAsigneeFrame()
 		f:SetWidth(ZodsRaidAssign.PLAYER_SIZE)
 		f:SetHeight(ZodsRaidAssign.PLAYER_SIZE)
 		f:SetBackdrop(backdrop2)
-		f:EnableMouse()
+		--f:EnableMouse()
 		f.texture = f:CreateTexture(nil, "BORDER")
 		f.Text = f:CreateFontString(nil, "ARTWORK")
 		f.Text:SetFont(STANDARD_TEXT_FONT, 12)
@@ -527,11 +541,10 @@ function ZodsRaidAssign.setAPlayerFrame(player)
 		ZodsRaidAssign.pickUpPlayer(f, player)
 	end)
 	f:SetScript('OnEnter', function()
-		GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-		GameTooltip:SetUnit("raid" .. player.raidNum)
-		GameTooltip:Show()
+		ZodsRaidAssign.mouseOverEnter(player)
 	end)
 	f:SetScript('OnLeave', function()  
+		ZodsRaidAssign.mouseOverExit(player)
 	end)
 	local nframes = ZodsRaidAssign.countBusyFrames(ZodsRaidAssign.player_frames)
 	local cols_per_row =  math.floor((ZRALayoutFrame:GetWidth() - 8 )/ (f:GetWidth() + 2))
