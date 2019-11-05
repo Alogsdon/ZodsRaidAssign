@@ -6,7 +6,7 @@ local ZodsRaidAssign = {
 }
 
 
-	
+	--C_ChatInfo.SendAddonMessage("prefix", "message" [, "chatType", "target"])
 
 ZodsRaidAssign.lastColumnId = 0
 
@@ -44,8 +44,8 @@ function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, ...)
 		
 	elseif event == "CHAT_MSG_ADDON" then
 		if arg1 == "ZRA" and (arg3 == "PARTY" or arg3 == "WHISPER" or arg3 == "RAID")  then -- and arg4 ~= UnitName("player")
-      ZodsRaidAssign:HandleRemoteData(arg2, arg4)
-	end
+      		ZodsRaidAssign:HandleRemoteData(arg2, arg4)
+		end
 	else
 		--unhandled onEvent
 		--DEFAULT_CHAT_FRAME:AddMessage(event..(arg1 or ""))
@@ -148,7 +148,83 @@ function ZodsRaidAssign.onLoad()
 	dragframe:SetMovable(true)
 	dragframe:Hide()
 
-	--make roster
+
+	ZodsRaidAssign.updateRoster()
+	
+
+	--Generate Assignments
+	local gen_ass_btn = CreateFrame("Button",'ZRAGenAssBtn', ZRALayoutFrame, "UIPanelButtonTemplate")
+	gen_ass_btn:SetText("Auto Fill")
+	gen_ass_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "TOPLEFT", 14, -14)
+	gen_ass_btn:SetWidth(120)
+	gen_ass_btn:SetHeight(30)
+	gen_ass_btn:SetScript("OnClick", function()
+		if ZodsRaidAssign.current_tab == "Roles" then
+			print('generating assignments for ' .. ZodsRaidAssign.current_tab)
+			ZodsRaidAssignPublic.funcs.Roles()
+			ZodsRaidAssign.showRoles()
+		else
+			print('generating assignments for ' .. ZodsRaidAssign.current_tab .. ' ' .. UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown))
+			ZodsRaidAssignPublic.funcs[ZodsRaidAssign.current_tab][UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)]()
+			ZodsRaidAssign.showBoss(ZodsRaidAssign.current_tab)
+		end
+	end)
+	gen_ass_btn:Show()
+
+	--Post Assignments
+	local ZRApost_ass_btn = CreateFrame("Button",'ZRApost_ass_btn', ZRALayoutFrame, "UIPanelButtonTemplate")
+	ZRApost_ass_btn:SetText("Post")
+	ZRApost_ass_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "TOPLEFT", 14 + 130, -14)
+	ZRApost_ass_btn:SetWidth(120)
+	ZRApost_ass_btn:SetHeight(30)
+	ZRApost_ass_btn:SetScript("OnClick", function()
+		print('posting ' .. UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown) .. ' assignments to raid')
+		local phrases = ZodsRaidAssignPublic.announcements[ZodsRaidAssign.current_tab][UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)](ZodsRaidAssign.raid_data)
+		if UnitInRaid("player") then
+
+			for _, line in ipairs(phrases or {}) do
+				SendChatMessage(line ,"RAID_WARNING" )
+			end
+		else
+			for _, line in ipairs(phrases or {}) do
+				print(line )
+			end
+		end
+		
+	end)
+	ZRApost_ass_btn:Show()
+
+	--load members
+	local load_mems_btn = CreateFrame("Button",'ZRAload_mems_btn', ZRALayoutFrame, "UIPanelButtonTemplate")
+	load_mems_btn:SetText("Load")
+	load_mems_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "BOTTOMLEFT", 14 , 50)
+	load_mems_btn:SetWidth(63)
+	load_mems_btn:SetHeight(30)
+	load_mems_btn:SetScript("OnClick", function()
+		ZodsRaidAssignPublic.loadMembers()
+		ZodsRaidAssign.updateRoster()
+	end)
+	load_mems_btn:Show()
+
+	--drop members
+	local drop_mems_btn = CreateFrame("Button",'ZRAdrop_mems_btn', ZRALayoutFrame, "UIPanelButtonTemplate")
+	drop_mems_btn:SetText("Drop")
+	drop_mems_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "BOTTOMLEFT", 14 , 90)
+	drop_mems_btn:SetWidth(63)
+	drop_mems_btn:SetHeight(30)
+	drop_mems_btn:SetScript("OnClick", function()
+		ZodsRaidAssignPublic.dropMembers()
+		ZodsRaidAssign.updateRoster()
+	end)
+	drop_mems_btn:Show()
+
+	f:Hide()
+end
+
+function ZodsRaidAssign.updateRoster()
+	ZodsRaidAssign.freeFrames(ZodsRaidAssign.player_frames)
+	ZodsRaidAssignPublic.updateRaidNums()
+	
 	local temp = {}
 	for r in ZodsRaidAssignPublic.raid_iter() do
 		table.insert(temp, r)
@@ -157,45 +233,6 @@ function ZodsRaidAssign.onLoad()
 	for i, r in ipairs(temp) do
 		ZodsRaidAssign.setAPlayerFrame(r)
 	end
-
-	--Generate Assignments
-	local gen_ass_btn = CreateFrame("Button",'ZRAGenAssBtn', ZRALayoutFrame, "UIPanelButtonTemplate")
-	gen_ass_btn:SetText("Auto Fill")
-	gen_ass_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "TOPLEFT", 10, -10)
-	gen_ass_btn:SetWidth(120)
-	gen_ass_btn:SetHeight(30)
-	gen_ass_btn:SetScript("OnClick", function()
-		print('generating assignments for page')
-		ZodsRaidAssignPublic.funcs[ZodsRaidAssign.current_tab][UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)]()
-		ZodsRaidAssign.showBoss(ZodsRaidAssign.current_tab, UIDropDownMenu_GetSelectedID(ZodsRaidAssign.dropdown))
-	end)
-	gen_ass_btn:Show()
-
-	--Post Assignments
-	local post_ass_btn = CreateFrame("Button",'post_ass_btn', ZRALayoutFrame, "UIPanelButtonTemplate")
-	post_ass_btn:SetText("Post")
-	post_ass_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "TOPLEFT", 10 + 130, -10)
-	post_ass_btn:SetWidth(120)
-	post_ass_btn:SetHeight(30)
-	post_ass_btn:SetScript("OnClick", function()
-		print('posting assignments to raid')
-		local phrase = "da MT is %tank1"
-		print(ZodsRaidAssignPublic.parseRaidPost(phrase))
-	end)
-	post_ass_btn:Show()
-
-	--Push Assignments
-	--local share_ass_btn = CreateFrame("Button",'share_ass_btn', ZRALayoutFrame, "UIPanelButtonTemplate")
-	--share_ass_btn:SetText("Push")
-	--share_ass_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "TOPLEFT", 10 + 130, -10)
-	--share_ass_btn:SetWidth(120)
-	--share_ass_btn:SetHeight(30)
-	--share_ass_btn:SetScript("OnClick", function()
-	--	print('pushing assignments to raid')
-	--end)
-	--share_ass_btn:Show()
-
-	f:Hide()
 end
 
 function ZodsRaidAssign.clickDropDown()
@@ -245,7 +282,7 @@ function ZodsRaidAssign.tabClicked(key, tabindex)
 			end
 			UIDropDownMenu_SetSelectedName(ZRAFightDropDown, ZRA_vars.raids[ZodsRaidAssign.current_tab][ind].name)
 			UIDropDownMenu_SetText(ZRAFightDropDown, ZRA_vars.raids[ZodsRaidAssign.current_tab][ind].name)
-			ZodsRaidAssign.showBoss(key, ind)
+			ZodsRaidAssign.showBoss(key)
 		end
 	end
 end
@@ -254,16 +291,27 @@ function ZodsRaidAssign.showRoles()
 	ZodsRaidAssign.showBoss()
 end
 
-function ZodsRaidAssign.showBoss(raid, boss)
-	local raid_data = nil
-	if boss then 
-		raid_data = ZRA_vars.raids[raid][boss] 
+function ZodsRaidAssign.showBoss(raid)
+	ZodsRaidAssign.updateRoster()
+	ZodsRaidAssign.raid_data = nil
+	if raid then
+		local boss_name = UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)
+		local ind = 1
+		for i,v in ipairs(ZRA_vars.raids[ZodsRaidAssign.current_tab]) do
+			if v.name == boss_name then
+				ind = i
+				break
+			end
+		end
+		ZodsRaidAssign.raid_data = ZRA_vars.raids[raid][ind]
+		ZRApost_ass_btn:Show()
 	else
-		raid_data = ZRA_vars.roles
+		ZodsRaidAssign.raid_data = ZRA_vars.roles
+		ZRApost_ass_btn:Hide()
 	end
 	ZodsRaidAssign.freeFrames(ZodsRaidAssign.group_frames)
 	ZRALayoutFrame.usedSpaceX = 0
-	for i, assign_group in ipairs(raid_data) do
+	for i, assign_group in ipairs(ZodsRaidAssign.raid_data) do
 		local f = ZodsRaidAssign.GetAGroupFrame()
 		f.text:SetText(assign_group.title)
 		f:SetPoint("TOPLEFT", ZRALayoutFrame, "TOPLEFT", 30 + ZRALayoutFrame.usedSpaceX, -60)
@@ -331,8 +379,12 @@ function ZodsRaidAssign.freeFrames(frames)
 end
 
 function ZodsRaidAssign.catchAsignee(catcher, player)
+	local code = ZodsRaidAssignPublic.getCodeFromName(player.name)
+	for i,v in pairs(catcher.dataRef.members) do
+		if code == v then return end
+	end
 	catcher.hover_ind = min(catcher.hover_ind, #catcher.members + 1)
-	table.insert(catcher.dataRef.members, catcher.hover_ind , ZodsRaidAssignPublic.getCodeFromName(player.name))
+	table.insert(catcher.dataRef.members, catcher.hover_ind , code)
 	ZodsRaidAssign.showAsignee(catcher, player, catcher.hover_ind )
 	return f
 end
@@ -360,7 +412,7 @@ function ZodsRaidAssign.showAsignee(catcher, player, where)
 		ZodsRaidAssign.mouseOverExit(player)
 	end)
 	f:SetPoint("CENTER", catcher, "TOP", 0 , -20 );
-	local color = RAID_CLASS_COLORS[player.class]
+	local color = ZodsRaidAssign.playerColor(player)
 	f:SetBackdropColor(color.r, color.g, color.b,1)
 	f.Text:SetText(string.sub(player.name,1,4))
 	f.busy = true
@@ -368,6 +420,21 @@ function ZodsRaidAssign.showAsignee(catcher, player, where)
 	table.insert(catcher.members, where or #catcher.members + 1, f)
 	catcher:adjustMembers()
 	f:Show()
+end
+
+function ZodsRaidAssign.playerColor(player)
+	local rn = ZRA_vars.roster[ZodsRaidAssignPublic.getCodeFromName(player.name)].raidNum
+	local c = RAID_CLASS_COLORS[player.class]
+	if rn == 0 then
+		return {r=0.2*c.r, g=0.2*c.g, b=0.2*c.b}
+	else
+		local _, _, _, _, _, _, _, online = GetRaidRosterInfo(rn)
+		if online then
+			return RAID_CLASS_COLORS[player.class]
+		else
+			return {r=0.55, g=0.55, b=0.55}
+		end
+	end
 end
 
 function ZodsRaidAssign.dropAsignee(columnframe, player)
@@ -517,7 +584,7 @@ function ZodsRaidAssign.pickUpPlayer(copying_frame, player)
 	ZDragframe:SetPoint("BOTTOMRIGHT", copying_frame, "TOPLEFT", ZodsRaidAssign.PLAYER_SIZE, -ZodsRaidAssign.PLAYER_SIZE)
 	--ZDragframe:SetHeight(ZodsRaidAssign.PLAYER_SIZE)
 	--ZDragframe:SetWidth(ZodsRaidAssign.PLAYER_SIZE)
-	local color = RAID_CLASS_COLORS[player.class]
+	local color = ZodsRaidAssign.playerColor(player)
 	ZDragframe:SetBackdropColor(color.r, color.g, color.b,1)
 	ZDragframe.Text:SetText(string.sub(player.name,1,4))
 	ZDragframe:Show()
@@ -547,11 +614,11 @@ function ZodsRaidAssign.setAPlayerFrame(player)
 		ZodsRaidAssign.mouseOverExit(player)
 	end)
 	local nframes = ZodsRaidAssign.countBusyFrames(ZodsRaidAssign.player_frames)
-	local cols_per_row =  math.floor((ZRALayoutFrame:GetWidth() - 8 )/ (f:GetWidth() + 2))
+	local cols_per_row =  math.floor((ZRALayoutFrame:GetWidth() - 8 - 80 )/ (f:GetWidth() + 2))
 	local row = math.floor(nframes / cols_per_row)
 	local col = modulo(nframes , cols_per_row)
-	f:SetPoint("CENTER", ZRALayoutFrame, "BOTTOMLEFT", 30 + f:GetHeight()*col , 30 + f:GetWidth()*row);
-	local color = RAID_CLASS_COLORS[player.class]
+	f:SetPoint("CENTER", ZRALayoutFrame, "BOTTOMLEFT", 80 + 30 + f:GetHeight()*col , 30 + f:GetWidth()*row);
+	local color = ZodsRaidAssign.playerColor(player)
 	f:SetBackdropColor(color.r, color.g, color.b,1)
 	f.Text:SetText(string.sub(player.name,1,4))
 	f.busy = true
@@ -603,156 +670,6 @@ end
 
 
 
-
-
-
-
-function ZodsRaidAssign.PositionRoleMembers(self)
-	for i, v in ipairs(self.role.groups[self.rolegroup]) do
-		v:SetPoint("TOPLEFT", v.role, "TOPLEFT", 20+40*(v.rolegroup-1), -40 - (i-2)*32)
-	end
-	local size = #self.role.groups[self.rolegroup]
-	self.role.groups[self.rolegroup][1]:SetPoint("TOPLEFT", self.role, "TOPLEFT", 20+40*(self.rolegroup-1), -40 - (size-1)*32)
-end
-
-
-
-function ZodsRaidAssign.Z_OptionsFrame(options, returnfunction)
-	local width = 300
-	local height = 300
-	
-	local currentY = 20
-	local currentX = 20
-	local busy_selectframes = 0
-	
-	local busy_stringframes = 0
-	local busy_labelframes = 0
-	
-	ZOptionsFrame.groups = {}
-	ZOptionsFrame.optionsSelected = {}
-	ZOptionsFrame:Raise()
-	for i, v in ipairs(options) do
-		local group = {}
-		if v.input == "SELECT" then
-			for i2, v2 in ipairs(v) do
-				local btn
-				if #ZOptionsFrame.selectframes - busy_selectframes == 0 then
-					btn = CreateFrame("Button",nil,ZOptionsFrame, "UIPanelButtonTemplate")
-					DEFAULT_CHAT_FRAME:AddMessage("made frame for "..v2)
-					table.insert(ZOptionsFrame.selectframes, btn)
-					
-					local highlight = btn:CreateTexture(nil, "BORDER")
-					btn.highlight = highlight
-					highlight:SetTexture("Interface\\ChatFrame\\ChatFrameBorder")
-					highlight:SetPoint("TOPLEFT", btn, "TOPLEFT", -4, 1)
-					highlight:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", 4, -7)
-					highlight:Hide()
-				else
-					btn = ZOptionsFrame.selectframes[1 + busy_selectframes]
-				end
-				local text = btn:GetFontString()
-				text:SetPoint("LEFT",btn,"LEFT",7,0)
-				text:SetPoint("RIGHT",btn,"RIGHT",-7,0)
-				text:SetText(v2)
-				btn:SetHeight(24)
-				btn:SetWidth(text:GetWidth()+20)
-				btn:SetPoint("TOPLEFT", ZOptionsFrame ,"TOPLEFT", currentX, 0-currentY)
-				btn:SetScript("OnClick", function()
-					for j,k in ipairs(ZOptionsFrame.groups[btn.group]) do
-						k.selected = false
-						k.highlight:Hide()
-					end
-					btn.highlight:Show() 
-					btn.selected = true
-					ZOptionsFrame.optionsSelected[i] = options[i][i2]
-				end)
-				
-				btn.group = i
-				btn.selected = false
-				btn.highlight:Hide()
-				busy_selectframes = busy_selectframes + 1
-				currentX = currentX + text:GetWidth() + 30
-				table.insert(group, btn)
-			end
-		elseif v.input == "STRING" then
-			--v.phrase
-				-- edit box
-				local edb
-				if #ZOptionsFrame.stringframes - busy_stringframes == 0 then
-					edb = CreateFrame("EditBox",nil,ZOptionsFrame, "InputBoxTemplate")
-					table.insert(ZOptionsFrame.stringframes, edb)
-					edb:SetAutoFocus(false)
-					edb:SetScript("OnEscapePressed", function(self) 
-						self:ClearFocus()
-						edb:SetText(ZOptionsFrame.optionsSelected[i])
-					end)
-					
-					edb:SetScript("OnEnterPressed", function(self) 
-						ZOptionsFrame.optionsSelected[i] = edb:GetText()
-						self:ClearFocus() 
-					end)
-					
-				else
-					edb = ZOptionsFrame.stringframes[1 + busy_stringframes]
-				end
-				edb:SetPoint("TOPLEFT", ZOptionsFrame ,"TOPLEFT", currentX + 50 , 0-currentY)
-				edb:SetWidth(100)
-				edb:SetHeight(25)
-				edb:Show()
-				edb:SetText("DEFAULT")
-				edb.group = i
-				ZOptionsFrame.optionsSelected[i] = edb:GetText()
-				--label
-				local lbl
-				if #ZOptionsFrame.labelframes - busy_labelframes == 0 then
-					lbl = ZOptionsFrame:CreateFontString(nil, "ARTWORK")
-					table.insert(ZOptionsFrame.labelframes, lbl)
-				else
-					lbl = ZOptionsFrame.labelframes[1 + busy_labelframes]
-				end
-				lbl:SetFont(STANDARD_TEXT_FONT, 12)
-				lbl:SetTextColor(0,0,0)
-				lbl:SetJustifyH("CENTER")
-				lbl:SetJustifyV("CENTER")
-				lbl:SetPoint("TOPLEFT", ZOptionsFrame ,"TOPLEFT", currentX, 0-currentY - 5)
-				lbl:SetText(v.phrase)
-				lbl:Show()
-		end
-		currentY = currentY + 40
-		currentX = 20
-		table.insert(ZOptionsFrame.groups, group)
-	end
-	
-	ZOptionsFrame:SetWidth(width)
-	ZOptionsFrame:SetHeight(height)
-	ZOptionsFrame.OK:SetScript("OnClick",function() returnfunction(options) ZOptionsFrame:Hide() end)
-	
-	ZOptionsFrame:Show()
-
-end
-
-
-
---ZOptionsFrame.selectframes[1]:GetScript("OnLeave")
-
---local function editbox()
---local editbox = CreateFrame("EditBox",nil,btn)
---	editbox:SetFontObject(ChatFontNormal)
---	editbox:SetScript("OnEscapePressed",function(this) this:ClearFocus() end)
---	editbox:SetScript("OnEnterPressed",function(this) this:ClearFocus() end)
---
---	editbox:SetTextInsets(5,5,3,3)
---	editbox:SetMaxLetters(256)
---	editbox:SetAutoFocus(false)
---	editbox:SetBackdropColor(0,0,0)
---	editbox:SetPoint("TOPLEFT",btn,"TOPLEFT",0,0)
---	editbox:SetPoint("BOTTOMRIGHT",btn,"BOTTOMRIGHT",0,0)
---	editbox:SetText("rere")
---end
-
-
-
-
 ZodsRaidAssign.scriptframe = CreateFrame("Frame")
 ZodsRaidAssign.scriptframe:RegisterEvent("ADDON_LOADED")
 ZodsRaidAssign.scriptframe:RegisterEvent("CHAT_MSG_ADDON")
@@ -760,63 +677,10 @@ ZodsRaidAssign.scriptframe:SetScript("OnEvent", ZodsRaidAssign.onEvent)
 ZodsRaidAssign.scriptframe:SetScript("OnUpdate", ZodsRaidAssign.onUpdate)
 
 
-function debugthis(arg1)
-	func = ZDragframe:GetCenter()
-	params = nil
-	if arg1 then
-		params = arg1
-	end
-	values = {func(params)}
-	for i, v in ipairs(values) do
-		DEFAULT_CHAT_FRAME:AddMessage("arg"..i.."="..(v or "F"))
-	end
-end
-
-local function justholdingthis()
-	btn = CreateFrame("Button", "myButton", ZRALayoutFrame, "SecureActionButtonTemplate");
-	btn:SetAttribute("type1", "macro");
-	btn:SetAttribute("unit", "player")
-	btn:SetAttribute("macrotext", "/targetexact " .. "Vindicator Aeus")
-
-
-	btn:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp", "Button4Up", "Button5Up")
-	btn:SetPoint("CENTER", ZRALayoutFrame, "TOPLEFT", 140, 26);
-	btn:SetWidth(30);
-	btn:SetHeight(30);
-	btn:SetMovable(true)
-	btn:EnableMouse(true)
-	btn:RegisterForDrag("LeftButton")
-	btn:SetScript("OnDragStart", btn.StartMoving)
-	btn:SetScript("OnDragStop", btn.StopMovingOrSizing)
-	
-	btn:Show();
-
-	btn.BarBG = btn:CreateTexture()
-	local color = RAID_CLASS_COLORS["WARRIOR"]
-	btn.BarBG:SetTexture(color.r, color.g, color.b,0)
-	btn.BarBG:SetAllPoints(btn)
-	
-	btn:SetBackdrop(backdrop)
-	btn:SetBackdropColor(color.r, color.g, color.b,1)
-	
-	
-	
-	btn.Text = btn:CreateFontString(nil, "ARTWORK")
-	btn.Text:SetFont(STANDARD_TEXT_FONT, 12)
-	btn.Text:SetJustifyH("CENTER")
-	btn.Text:SetJustifyV("CENTER")
-	btn.Text:SetPoint("CENTER", btn, "CENTER")
-	btn.Text:SetText("rere")
-	
-	btn.Text:SetTextColor(0,0,0)
-
-end
-
-
-
 
 function ZodsRaidAssignPublic.OpenMenu()
 	--ZodsRaidAssign.AllPlayerFrames()
+	ZodsRaidAssignPublic.updateRaidNums()
 	if not ZodsRaidAssign.current_tab then 
 		ZodsRaidAssign.tabClicked("Roles")()
 	end

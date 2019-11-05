@@ -148,8 +148,8 @@ function ZodsRaidAssign.MakeMacros()
 end
 
 function ZodsRaidAssignPublic.parseRaidPost(post)
-	local tanks, ti = {}, ZodsRaidAssign.tank_iter()
-	local heals, hi = {}, ZodsRaidAssign.tank_heal_iter()
+	local tanks, ti = {}, ZodsRaidAssignPublic.tank_iter()
+	local heals, hi = {}, ZodsRaidAssignPublic.tank_heal_iter()
 	local locks, li = {}, ZodsRaidAssign.lock_iter()
 	local melee, mi = {}, ZodsRaidAssign.melee_iter()
 	for i = 1,10 do
@@ -185,8 +185,8 @@ function ZodsRaidAssign.ShazzMacro()
 end
 
 function ZodsRaidAssign.GoleMaggMacro()
-	local ti = ZodsRaidAssign.tank_iter()
-	local hi = ZodsRaidAssign.tank_heal_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
+	local hi = ZodsRaidAssignPublic.tank_heal_iter()
 
 	s = '/rw GOLEMAG\n'
 	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
@@ -199,8 +199,8 @@ end
 
 
 function ZodsRaidAssign.RagMacro()
-	local ti = ZodsRaidAssign.tank_iter()
-	local hi = ZodsRaidAssign.tank_heal_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
+	local hi = ZodsRaidAssignPublic.tank_heal_iter()
 
 	s = '/rw RAG\n'
 	s = s .. '/rw  Heal the bosses target ' .. hi().name .. ', ' .. hi().name .. ' and ' .. hi().name ..'\n'
@@ -213,8 +213,8 @@ function ZodsRaidAssign.RagMacro()
 end
 
 function ZodsRaidAssign.SulfMacro()
-	local ti = ZodsRaidAssign.tank_iter()
-	local hi = ZodsRaidAssign.tank_heal_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
+	local hi = ZodsRaidAssignPublic.tank_heal_iter()
 	local mi = ZodsRaidAssign.melee_iter()
 	local s = '/rw SULF\n'
 	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. '\n'
@@ -235,8 +235,8 @@ function ZodsRaidAssign.SulfMacro()
 end
 
 function ZodsRaidAssign.DomoMacro()
-	local ti = ZodsRaidAssign.tank_iter()
-	local hi = ZodsRaidAssign.tank_heal_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
+	local hi = ZodsRaidAssignPublic.tank_heal_iter()
 	local t1 = ti()
 	local t2 = ti()
 	local t3 = ti()
@@ -265,8 +265,8 @@ function ZodsRaidAssign.DomoMacro()
 end
 
 function ZodsRaidAssign.GarrMacro()
-	local ti = ZodsRaidAssign.tank_iter()
-	local hi = ZodsRaidAssign.tank_heal_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
+	local hi = ZodsRaidAssignPublic.tank_heal_iter()
 	local s = '/rw GARR\n'
 	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. '\n'
 	s = s .. '/rw ' .. ti().name .. ' is on {X}, HEALED BY ' .. hi().name .. '\n'
@@ -280,8 +280,8 @@ end
 
 
 function ZodsRaidAssign.GehMacro()
-	local ti = ZodsRaidAssign.tank_iter()
-	local hi = ZodsRaidAssign.tank_heal_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
+	local hi = ZodsRaidAssignPublic.tank_heal_iter()
 
 	s = '/rw GEHENAS\n'
 	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
@@ -294,8 +294,8 @@ function ZodsRaidAssign.GehMacro()
 end
 
 function ZodsRaidAssign.LuciMacro()
-	local ti = ZodsRaidAssign.tank_iter()
-	local hi = ZodsRaidAssign.tank_heal_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
+	local hi = ZodsRaidAssignPublic.tank_heal_iter()
 
 	s = '/rw LUCI\n'
 	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
@@ -310,8 +310,8 @@ end
 
 
 function ZodsRaidAssign.MagMacro()
-	local ti = ZodsRaidAssign.tank_iter()
-	local hi = ZodsRaidAssign.tank_heal_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
+	local hi = ZodsRaidAssignPublic.tank_heal_iter()
 
 	local s = '/rw MAG\n'
 	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. ', ' .. hi().name .. ', ' .. hi().name .. '\n'
@@ -351,8 +351,8 @@ function ZodsRaidAssign.GroupDistribute(numGroups,numBuffers)
 end
 
 function ZodsRaidAssign.TrashHealMacro()
-	local ti = ZodsRaidAssign.tank_iter()
-	local hi = ZodsRaidAssign.tank_heal_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
+	local hi = ZodsRaidAssignPublic.tank_heal_iter()
 
 	s = '/rw TRASH HEAL ASSIGNMENTS\n'
 	for i = 1, 3 do
@@ -395,7 +395,7 @@ function ZodsRaidAssign.MacroSetBody(i, body)
 end
 
 function ZodsRaidAssign.TankMacro()
-	local ti = ZodsRaidAssign.tank_iter()
+	local ti = ZodsRaidAssignPublic.tank_iter()
 	shapes = {
 		'X {X}',
 		'skull {Skull}',
@@ -412,16 +412,24 @@ function ZodsRaidAssign.TankMacro()
 	ZodsRaidAssign.MacroSetBody(i, s)
 end
 
-ZodsRaidAssignPublic.SHAPES = {
-	'{Skull}',
-	'{X}',
-	'{Square}',
-	'{Moon}',
-	'{Triangle}',
-	'{Diamond}',
-	'{Circle}',
-	'{Star}',
+ZodsRaidAssign.SHAPES = {
+	skull = true,
+	x = true,
+	square = true,
+	moon = true,
+	triangle = true,
+	diamond = true,
+	circle = true,
+	star = true,
 }
+
+function ZodsRaidAssignPublic.shape(s)
+	if ZodsRaidAssign.SHAPES[string.lower(s)] then
+		return '{' .. s .. '}'
+	else
+		return s
+	end
+end
 
 function ZodsRaidAssign.CCMacro()
 	local li = ZodsRaidAssign.lock_iter()
@@ -491,23 +499,19 @@ function ZodsRaidAssign.BuffMacro()
 end
 
 function ZodsRaidAssign.GetTanks()
-	local temp = {}
-	for i,v in ipairs(ZRA_vars.roles[1].columns[1].members) do
-		table.insert(temp,ZRA_vars.roster[v])
-	end
-	
-	return temp
+
+	return shallowcopy(ZRA_vars.roles[1].columns[1].members)
 end
 
 function ZodsRaidAssign.GetHeals()
 	return {
-		pallies=shallowcopy(ZRA_vars.raid.healers.pallies),
-		priests=shallowcopy(ZRA_vars.raid.healers.priests),
-		druids=shallowcopy(ZRA_vars.raid.healers.druids)
+		priests=shallowcopy(ZRA_vars.roles[2].columns[1].members),
+		pallies=shallowcopy(ZRA_vars.roles[2].columns[2].members),
+		druids=shallowcopy(ZRA_vars.roles[2].columns[3].members)
 	}
 end
 
-function ZodsRaidAssign.tank_heal_iter()
+function ZodsRaidAssignPublic.tank_heal_iter()
 	local unass_healers = ZodsRaidAssign.GetHeals()
 	local lf = 'pally'
 	return 
@@ -523,7 +527,7 @@ function ZodsRaidAssign.tank_heal_iter()
 					lf = 'pally'
 					return table.remove(unass_healers.druids, 1)
 				else
-					return {name='missing healer'}
+					--nil
 				end
 			elseif lf == 'priest' then
 				if #unass_healers.priests > 0 then
@@ -536,20 +540,18 @@ function ZodsRaidAssign.tank_heal_iter()
 					lf = 'pally'
 					return table.remove(unass_healers.druids, 1)
 				else
-					return {name='missing healer'}
+					--nil
 				end
 			end
 		end
 end
 
-function ZodsRaidAssign.tank_iter()
-	unass_tanks = ZodsRaidAssign.GetTanks()
+function ZodsRaidAssignPublic.tank_iter()
+	local unass_tanks = ZodsRaidAssign.GetTanks()
 	return 
 		function ()
 			if #unass_tanks > 0 then
 				return table.remove(unass_tanks, 1)
-			else
-				return {name='missing tank'}
 			end
 		end
 end
@@ -740,6 +742,44 @@ function ZodsRaidAssignPublic.raid_iter()
 	--end
 end
 
+function ZodsRaidAssignPublic.loadMembers()
+	local reverse_ind = {}
+	for k,v in pairs(ZRA_vars.roster) do
+		reverse_ind[v.name] = k
+	end
+	for i=1,GetNumGroupMembers() do
+		local name, _, _, _, _, class = GetRaidRosterInfo(i)
+		if not reverse_ind[name] then
+			ZRA_vars.roster[ZodsRaidAssign.getUnusedCode()] = {
+			class = class,
+			name = name,
+			raidNum = i,
+			}
+		end
+	end
+end
+
+function ZodsRaidAssignPublic.updateRaidNums()
+	local reverse_ind = {}
+	for k,v in pairs(ZRA_vars.roster) do
+		reverse_ind[v.name] = k
+	end
+	for k,v in pairs(ZRA_vars.roster) do
+		v.raidNum = 0
+	end
+	for i=1,GetNumGroupMembers() do
+		local name, _, _, _, _, class = GetRaidRosterInfo(i)
+		if reverse_ind[name] then
+			ZRA_vars.roster[reverse_ind[name]].raidNum = i
+		end
+	end
+end
+
+function ZodsRaidAssignPublic.dropMembers()
+	ZRA_vars.roster = {}
+	ZodsRaidAssignPublic.loadMembers()
+end
+
 function ZodsRaidAssignPublic.getCodeFromName(n)
 	for k,v in pairs(ZRA_vars.roster) do
 		if v.name ==n then
@@ -855,6 +895,40 @@ function tablefirstkey(t)
 	for k,v in pairs(t) do
 		return(k)
 	end
+end
+
+function splitmess(mess_arr, sep, lencap)
+	local lines = {}
+	local current_line = ""
+	for i,v in ipairs(mess_arr) do
+		if string.len(current_line) + string.len(sep) + string.len(v) >= lencap then
+			table.insert(lines, current_line)
+			current_line = ""
+		elseif string.len(current_line) > 0 then
+			current_line = current_line .. sep
+		end
+		current_line = current_line .. v
+	end
+	if string.len(current_line) > 0 then
+		table.insert(lines, current_line)
+	end
+	return lines
+end
+
+function remaining(it)
+	local temp = {}
+	for item in it do
+		table.insert(temp,item)
+	end
+	return temp
+end
+
+function codesToValsArr(codes, hash, key)
+	local vals = {}
+	for _,v in ipairs(codes) do
+		table.insert(vals, hash[v][key])
+	end
+	return vals
 end
 
 ZodsRaidAssign.scriptframe = CreateFrame("Frame", 'ZRAFrame')
