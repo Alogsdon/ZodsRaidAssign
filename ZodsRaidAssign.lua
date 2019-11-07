@@ -7,20 +7,71 @@ local ZodsRaidAssign = {
 	
 
 function ZodsRaidAssign.onUpdate()
+	if ZodsRaidAssign.requestSent then
+		if GetTime() - ZodsRaidAssign.requestSent.t > 3.0 then
+			ZodsRaidAssign.requestTimeout()
+		end
+	end
+end
 
+function ZodsRaidAssign.requestTimeout()
+	local request = ZodsRaidAssign.requestSent
+	if request.item == 'rosterVersion' then
+		print('using my own roster version')
+		ZodsRaidAssign.raidsRosterVersion = ZodsRaidAssign.rosterVersion()
+		ZodsRaidAssign.reGreet()
+	elseif request.item == 'rosterPayload' then
+		print(request.askee)
+		ZodsRaidAssign.otherUsers[request.askee] = nil
+	end
+	ZodsRaidAssign.requestSent = nil
+	if #ZodsRaidAssign.request_queue > 0 then
+		ZodsRaidAssign.sendRequestFromQueue()
+	end
 end
 
 function ZodsRaidAssign.onLoad()
+	C_ChatInfo.RegisterAddonMessagePrefix("ZRA")
+	ZodsRaidAssign.otherUsers = {}
 	ZodsRaidAssign.CODES = {}
+	ZodsRaidAssign.request_queue = {}
+	ZodsRaidAssign.LETTER_MAP = {}
+	ZodsRaidAssign.CLASS_MAP = {
+		["WARLOCK"] = 1,
+		["WARRIOR"] = 2,
+		["PALADIN"] = 3,
+		["PRIEST"] = 4,
+		["DRUID"] = 5,
+		["MAGE"] = 6,
+		["ROGUE"] = 7,
+		["HUNTER"] = 8,
+		["SHAMAN"] = 9,
+	}
+	ZodsRaidAssign.CLASS_MAP_BACK = {}
+	for k,v in pairs(ZodsRaidAssign.CLASS_MAP) do
+		ZodsRaidAssign.CLASS_MAP_BACK[v] = k
+	end
+	ZodsRaidAssign.RAID_MAP = {
+		['Roles'] = '0',
+		['Onyxias Lair'] = '1',
+		['Molten Core'] = '2',
+	}
+	ZodsRaidAssign.RAID_MAP_BACK = {}
+	for k,v in pairs(ZodsRaidAssign.RAID_MAP) do
+		ZodsRaidAssign.RAID_MAP_BACK[v] = k
+	end
+
 	local str = 'abcdefghijklmnopqrstuvwxysABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 	for i = 1, string.len(str) do
 		table.insert(ZodsRaidAssign.CODES, string.sub(str, i, i))
+		ZodsRaidAssign.LETTER_MAP[string.sub(str, i, i)] = i
 	end
 	ZodsRaidAssign.checkSavedVars()
+	ZodsRaidAssign.Greet()
 end
 
 
-function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, ...)
+function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 	if (event == "ADDON_LOADED" and arg1 == "ZodsRaidAssign") then
 		
 		ZodsRaidAssign.onLoad()
@@ -28,9 +79,13 @@ function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, ...)
 		
 		
 	elseif event == "CHAT_MSG_ADDON" then
-		if arg1 == "ZRA" and (arg3 == "PARTY" or arg3 == "WHISPER" or arg3 == "RAID")  then -- and arg4 ~= UnitName("player")
-      	ZodsRaidAssign:HandleRemoteData(arg2, arg4)
+		if arg1 == "ZRA" and string.gmatch(arg4,'(%w+)-')() ~= UnitName("player") then
+      		ZodsRaidAssign.HandleRemoteData(arg2, arg3, arg4)
 		end
+	elseif event == "GROUP_JOINED" then
+		ZodsRaidAssign.Greet()
+	elseif event == "GROUP_ROSTER_UPDATE" then
+		ZodsRaidAssign.reGreet()
 	elseif event == 'PLAYER_ENTERING_WORLD' or event == 'PLAYER_LEAVING_WORLD' then
 		--unhandled onEvent
 		local events = ZRA_vars.events or {}
@@ -43,6 +98,183 @@ function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, ...)
 		end
 	else
 	end
+end
+
+
+
+function ZodsRaidAssign.Greet()
+	ZodsRaidAssign.otherUsers = {}
+	ZodsRaidAssign.requestSent = {t = GetTime(), item = 'rosterVersion'}
+	ZodsRaidAssign.raidsRosterVersion = nil
+	C_ChatInfo.SendAddonMessage("ZRA", "hello", 'RAID')
+end
+
+function ZodsRaidAssign.reGreet()
+	ZodsRaidAssign.otherUsers = {}
+	if ZodsRaidAssign.raidsRosterVersion then
+		C_ChatInfo.SendAddonMessage("ZRA", "hi"..ZodsRaidAssign.raidsRosterVersion, 'RAID')
+	end
+end
+
+function ZodsRaidAssign.rosterVersion()
+	local version = 0
+	local m = ZodsRaidAssign.LETTER_MAP
+	for k,v in pairs(ZRA_vars.roster) do
+		if m[string.sub(v.name, 1, 1)] then
+			version = version + m[string.sub(k, 1, 1)] * m[string.sub(v.name, 1, 1)]
+		else
+			version = version + 1
+		end
+	end
+	return string.format("%04d", modulo(version, 9547))
+end
+
+
+
+function ZodsRaidAssign.HandleRemoteData(arg2, arg3, arg4)
+	local sender = string.gmatch(arg4,'(%w+)-')() or arg4
+	local task = string.sub(arg2,0,2)
+	print('heard ' .. arg2)
+	if task == 'he' then
+		ZodsRaidAssign.reGreet()
+		ZodsRaidAssign.otherUsers[sender] = true
+	elseif task == 'hi' then
+		ZodsRaidAssign.raidsRosterVersion = string.sub(arg2,3,6)
+		ZodsRaidAssign.otherUsers[sender] = true
+		if ZodsRaidAssign.requestSent and ZodsRaidAssign.requestSent.item == 'rosterVersion' then
+			ZodsRaidAssign.requestSent = nil
+		end
+		if ZodsRaidAssign.rosterVersion() ~= ZodsRaidAssign.raidsRosterVersion then
+			ZRA_vars.roster = {}
+			ZodsRaidAssign.askForRosterPayload()
+		end
+	elseif task == 'rr' then
+		ZodsRaidAssign.sendRosterData(sender)
+	elseif task == 'sr' then
+		if ZodsRaidAssign.rosterVersion() ~= ZodsRaidAssign.raidsRosterVersion then
+			ZodsRaidAssign.requestSent = nil
+			ZodsRaidAssign.setRosterFromMess(string.sub(arg2,3))
+		end
+	elseif task == 'bu' then
+		ZodsRaidAssign.hearBossAssigns(string.sub(arg2,3))
+	end
+end
+
+function ZodsRaidAssign.sendRosterData(dest)
+	ZodsRaidAssignPublic.updateRaidNums()
+	local mess_arr = {}
+	for k,v in pairs(ZRA_vars.roster) do
+		if v.raidNum > 0 then
+			table.insert(mess_arr,k .. v.raidNum)
+		else
+			table.insert(mess_arr,k .. v.name..ZodsRaidAssign.CLASS_MAP[v.class])
+		end
+	end
+	local lines = splitmess(mess_arr, ',', 220)
+	for i,v in ipairs(lines) do
+		C_ChatInfo.SendAddonMessage("ZRA", "sr" .. v, 'WHISPER', dest)
+	end
+
+	ZodsRaidAssignPublic.sendBossAssigns("Roles", nil, dest)
+	for raidName, raidData in pairs(ZRA_vars.raids) do
+		for bossIndex,bossAssigns in ipairs(raidData) do
+			ZodsRaidAssignPublic.sendBossAssigns(raidName, bossIndex, dest)
+		end
+	end
+	
+end
+
+function ZodsRaidAssign.hearBossAssigns(mess)
+	local raidKey = ZodsRaidAssign.RAID_MAP_BACK[string.sub(mess,1,1)]
+	local bosskey = tonumber(string.sub(mess,2,3))
+	local assignsMess = string.sub(mess,4)
+	local groups = mysplit(assignsMess, '.')
+	for groupInd, colmnsMess in ipairs(groups) do
+		local columns = mysplit(colmnsMess, ',')
+		for colInd,membersMess in ipairs(columns) do
+			local members = dicestring(membersMess)
+			if raidKey == "Roles" then
+				ZRA_vars.roles[groupInd].columns[colInd].members = members
+			else
+				ZRA_vars.raids[raidKey][bosskey][groupInd].columns[colInd].members = members
+			end
+		end
+	end
+	ZodsRaidAssignPublic.updateUI()
+end
+
+function ZodsRaidAssignPublic.sendBossAssigns(raidName, bossIndex, dest)
+	if not bossIndex then bossIndex = 0 end
+	local bossAssigns
+	if bossIndex == -1 then
+		raidName = "Roles"
+	end
+	if raidName == "Roles" then
+		bossAssigns = ZRA_vars.roles
+	else
+		bossAssigns = ZRA_vars.raids[raidName][bossIndex]
+	end
+
+	local p = 'bu' .. ZodsRaidAssign.RAID_MAP[raidName] .. string.format("%02d", bossIndex)
+	for groupInd, group in ipairs(bossAssigns) do
+		for columnInd, column in ipairs(group.columns) do
+			for _, playerCode in ipairs(column.members) do
+				p = p .. playerCode
+			end
+			p = p .. ","
+		end
+		p = p .. "."
+	end
+	if dest then
+		C_ChatInfo.SendAddonMessage("ZRA", p, 'WHISPER', dest)
+	else
+		C_ChatInfo.SendAddonMessage("ZRA", p, 'RAID')
+	end
+end
+
+function ZodsRaidAssign.askForRosterPayload()
+	local guy_to_ask = tablefirstkey(ZodsRaidAssign.otherUsers)
+	if not guy_to_ask then return end
+	local request = {t = GetTime(), item = 'rosterPayload', askee = guy_to_ask}
+	if ZodsRaidAssign.requestSent then
+		table.insert(ZodsRaidAssign.request_queue, request)
+	else
+		ZodsRaidAssign.requestSent = request
+		C_ChatInfo.SendAddonMessage("ZRA", "rr", 'WHISPER', guy_to_ask)
+	end
+end
+
+function ZodsRaidAssign.sendRequestFromQueue()
+	local request = table.remove(ZodsRaidAssign.request_queue, 1)
+	if request.item == 'rosterPayload' then
+		ZodsRaidAssign.askForRosterPayload()
+	end
+end
+
+function ZodsRaidAssign.setRosterFromMess(mess)
+	for entry in string.gmatch(mess, '([^,]+)') do
+		if string.len(entry) == 2 then
+			local rnum = tonumber(string.sub(entry,2))
+			local name, _, _, _, _, class = GetRaidRosterInfo(rnum)
+			local dude = {
+				class = class,
+				name = name,
+				raidNum = rnum,
+			}
+			ZRA_vars.roster[string.sub(entry,1,1)] = dude
+		else
+			local rnum = 0
+			local name = string.sub(entry,2,-2)
+			local class = ZodsRaidAssign.CLASS_MAP_BACK[tonumber(string.sub(entry,-1))]
+			local dude = {
+				class = class,
+				name = name,
+				raidNum = rnum,
+			}
+			ZRA_vars.roster[string.sub(entry,1,1)] = dude
+		end
+	end
+	ZodsRaidAssign.myRosterChanged()
 end
 
 function ZodsRaidAssign.cleanupEvents()
@@ -757,6 +989,19 @@ function ZodsRaidAssignPublic.loadMembers()
 			}
 		end
 	end
+	ZodsRaidAssign.pushNewRoster()
+	
+end
+
+function ZodsRaidAssign.pushNewRoster()
+	ZodsRaidAssign.raidsRosterVersion = ZodsRaidAssign.rosterVersion()
+	ZodsRaidAssign.reGreet()
+end
+
+function ZodsRaidAssign.myRosterChanged()
+	if ZRALayoutFrame:IsShown() then 
+		ZodsRaidAssignPublic.OpenMenu()
+	end
 end
 
 function ZodsRaidAssignPublic.updateRaidNums()
@@ -843,7 +1088,7 @@ SlashCmdList["ZRAIDASSIGN"] = function(msg)
 	elseif (command == 'menu') then
 		ZodsRaidAssignPublic.OpenMenu()
 	elseif (command == 'test') then
-		
+		print(ZodsRaidAssign.raidsRosterVersion)
 	else 
 	end
 end
@@ -923,6 +1168,29 @@ function remaining(it)
 	return temp
 end
 
+function mysplit (inputstr, sep)
+	local t={}
+	local p = ''
+	for i = 1, string.len(inputstr) do
+		local letter = string.sub(inputstr, i, i)
+		if letter == sep then
+			table.insert(t, p)
+			p = ''
+		else
+			p = p .. letter
+		end
+	end
+	return t
+end
+
+function dicestring(str)
+	local t = {}
+	for i = 1, string.len(str) do
+		table.insert(t, string.sub(str, i, i))
+	end
+	return t
+end
+
 function codesToValsArr(codes, hash, key)
 	local vals = {}
 	for _,v in ipairs(codes) do
@@ -933,6 +1201,9 @@ end
 
 ZodsRaidAssign.scriptframe = CreateFrame("Frame", 'ZRAFrame')
 ZodsRaidAssign.scriptframe:RegisterEvent("ADDON_LOADED")
+ZodsRaidAssign.scriptframe:RegisterEvent("CHAT_MSG_ADDON")
+ZodsRaidAssign.scriptframe:RegisterEvent("GROUP_JOINED")
+ZodsRaidAssign.scriptframe:RegisterEvent("GROUP_ROSTER_UPDATE")
 ZodsRaidAssign.scriptframe:SetScript("OnEvent", ZodsRaidAssign.onEvent)
 ZodsRaidAssign.scriptframe:SetScript("OnUpdate", ZodsRaidAssign.onUpdate)
 
