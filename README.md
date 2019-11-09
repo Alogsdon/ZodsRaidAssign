@@ -6,15 +6,15 @@ edit the folder name so it is exactly "ZodsRaidAssign" (i.e. remove the "-1.0" o
 <br>
 <h2>Commands</h2>
 <h3>primary commands you may actually use</h3>
-`/zra` opens assignment window
-`/zra save {tag}` saves your current raid assignments so you can load later
-`/zra load {tag}` loads a saved raid assignment. if you leave {tag} blank, it will list saved tags to you
+```/zra``` opens assignment window
+```/zra save {tag}``` saves your current raid assignments so you can load later
+```/zra load {tag}``` loads a saved raid assignment. if you leave {tag} blank, it will list saved tags to you
 
 <h3>some extra commands that are in there</h3>
-`/zra delete {tag}` deletes an old raid assignment. idk why you'd want to. maybe you think the file is too big or something
-`/zra test1` or `/zra test1` loads a dummy raid so you can test the addon
-`/zra i` lists times when you left instances, good for keeping track of hourly instance lockouts
-`/zra wipe` works with the instance lockout tracking, lets the addon know you are re-entering a non-fresh instance (*theres not really a good way to detect that*)
+```/zra delete {tag}``` deletes an old raid assignment. idk why you'd want to. maybe you think the file is too big or something
+```/zra test1``` or ```/zra test1``` loads a dummy raid so you can test the addon
+```/zra i``` lists times when you left instances, good for keeping track of hourly instance lockouts
+```/zra wipe``` works with the instance lockout tracking, lets the addon know you are re-entering a non-fresh instance (*theres not really a good way to detect that*)
 
 <br>
 <h2>brief walkthrough
