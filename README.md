@@ -1,10 +1,10 @@
 # ZodsRaidAssign
-##Installation<br></h2>
-download a release<br>
+##Installation
+download a release
 extract the release to your addon folder<br>
 edit the folder name so it is exactly "ZodsRaidAssign" (i.e. remove the "-1.0" or "-master")<br>
 <br>
-##Commands<br></h2>
+##Commands
 ###primary commands you may actually use
 `/zra` opens assignment window
 `/zra save {tag}` saves your current raid assignments so you can load later
