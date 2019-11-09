@@ -17,12 +17,15 @@ end
 function ZodsRaidAssign.requestTimeout()
 	local request = ZodsRaidAssign.requestSent
 	if request.item == 'rosterVersion' then
-		print('using my own roster version')
 		ZodsRaidAssign.raidsRosterVersion = ZodsRaidAssign.rosterVersion()
+		ZodsRaidAssign.raidsAssignsVersion = ZodsRaidAssign.raidAssignsVersion()
 		ZodsRaidAssign.reGreet()
 	elseif request.item == 'rosterPayload' then
-		print(request.askee)
 		ZodsRaidAssign.otherUsers[request.askee] = nil
+		ZodsRaidAssign.askForRosterPayload()
+	elseif request.item == 'bossAssigns' then
+		ZodsRaidAssign.otherUsers[request.askee] = nil
+		ZodsRaidAssign.askForBossAssigns()
 	end
 	ZodsRaidAssign.requestSent = nil
 	if #ZodsRaidAssign.request_queue > 0 then
@@ -66,10 +69,44 @@ function ZodsRaidAssign.onLoad()
 		table.insert(ZodsRaidAssign.CODES, string.sub(str, i, i))
 		ZodsRaidAssign.LETTER_MAP[string.sub(str, i, i)] = i
 	end
+	ZodsRaidAssignPublic.assignUpdateHistory = {}
 	ZodsRaidAssign.checkSavedVars()
 	ZodsRaidAssign.Greet()
 end
 
+function ZodsRaidAssignPublic.setRaidAssignment(raid, boss, group, column, members, initiator)
+	if not(type(boss) == 'number') then
+		boss = ZodsRaidAssign.getBossIndFromName(raid, boss)
+	end
+	local boss_data = nil
+	if raid == "Roles" then
+		boss_data = ZRA_vars.roles
+	else
+		boss_data = ZRA_vars.raids[raid][boss]
+	end
+	local changed = setGetDiff(boss_data[group].columns[column], 'members', members)
+	if changed and initiator ~= 'self' then
+		ZodsRaidAssignPublic.dataChanged()
+	end
+end
+
+function ZodsRaidAssignPublic.dataChanged()
+	ZodsRaidAssign.raidsAssignsVersion = ZodsRaidAssign.raidAssignsVersion()
+	ZodsRaidAssignPublic.updateUI()
+end
+
+function ZodsRaidAssignPublic.dropMissingAssignments(raid, boss, group, column, members)
+
+	
+end
+
+function ZodsRaidAssign.getBossIndFromName(raid, bossName)
+	for i,v in ipairs(ZRA_vars.raids[raid]) do
+		if v.name == BossName then
+			return i
+		end
+	end
+end
 
 function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 	if (event == "ADDON_LOADED" and arg1 == "ZodsRaidAssign") then
@@ -79,8 +116,15 @@ function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 		
 		
 	elseif event == "CHAT_MSG_ADDON" then
-		if arg1 == "ZRA" and string.gmatch(arg4,'(%w+)-')() ~= UnitName("player") then
-      		ZodsRaidAssign.HandleRemoteData(arg2, arg3, arg4)
+		if arg1 == "ZRA" then
+			local sender = string.gmatch(arg4,'(%w+)-')() or arg4
+			if sender == UnitName("player") then
+				if ZodsRaidAssignPublic.debugging then
+					print('said ' .. arg2)
+				end
+			else
+				ZodsRaidAssign.HandleRemoteData(arg2, arg3, sender)
+			end
 		end
 	elseif event == "GROUP_JOINED" then
 		ZodsRaidAssign.Greet()
@@ -94,7 +138,6 @@ function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 		if #events==0 or (not (instanceType == events[#events].inst_type)) then
 			table.insert(events, {event = event, time = GetTime(), instance = iname, inst_type = instanceType, id = instanceID})
 		else
-			print(instanceType .. events[#events].inst_type)
 		end
 	else
 	end
@@ -106,13 +149,14 @@ function ZodsRaidAssign.Greet()
 	ZodsRaidAssign.otherUsers = {}
 	ZodsRaidAssign.requestSent = {t = GetTime(), item = 'rosterVersion'}
 	ZodsRaidAssign.raidsRosterVersion = nil
+	ZodsRaidAssign.raidsAssignsVersion = nil
 	C_ChatInfo.SendAddonMessage("ZRA", "hello", 'RAID')
 end
 
 function ZodsRaidAssign.reGreet()
 	ZodsRaidAssign.otherUsers = {}
-	if ZodsRaidAssign.raidsRosterVersion then
-		C_ChatInfo.SendAddonMessage("ZRA", "hi"..ZodsRaidAssign.raidsRosterVersion, 'RAID')
+	if ZodsRaidAssign.raidsRosterVersion and ZodsRaidAssign.raidsAssignsVersion then
+		C_ChatInfo.SendAddonMessage("ZRA", "hi"..ZodsRaidAssign.raidsRosterVersion..ZodsRaidAssign.raidsAssignsVersion, 'RAID')
 	end
 end
 
@@ -129,34 +173,68 @@ function ZodsRaidAssign.rosterVersion()
 	return string.format("%04d", modulo(version, 9547))
 end
 
+function ZodsRaidAssign.raidAssignsVersion()
+	local version = 0
+	local m = ZodsRaidAssign.LETTER_MAP
+	for raidkey,raid in pairs(ZRA_vars.raids) do
+		local raidNum = ZodsRaidAssign.RAID_MAP[raidkey]
+		for bossNum, boss in ipairs(raid) do
+			for groupi,group in ipairs(boss) do
+				for coli,col in ipairs(group.columns) do
+					for memi,mem in ipairs(col.members) do
+						version = version + m[mem] * (raidNum + bossNum + groupi + coli + memi)
+					end
+				end
+			end
+		end
+	end
+	for groupi,group in ipairs(ZRA_vars.roles) do
+		for coli,col in ipairs(group.columns) do
+			for memi,mem in ipairs(col.members) do
+				version = version + m[mem] * (1 + groupi + coli + memi)
+			end
+		end
+	end
+	return string.format("%04d", modulo(version, 9547))
+end
 
 
 function ZodsRaidAssign.HandleRemoteData(arg2, arg3, arg4)
-	local sender = string.gmatch(arg4,'(%w+)-')() or arg4
+	local sender = arg4
 	local task = string.sub(arg2,0,2)
-	print('heard ' .. arg2)
+	if ZodsRaidAssignPublic.debugging then print('heard ' .. arg2) end
 	if task == 'he' then
 		ZodsRaidAssign.reGreet()
 		ZodsRaidAssign.otherUsers[sender] = true
 	elseif task == 'hi' then
 		ZodsRaidAssign.raidsRosterVersion = string.sub(arg2,3,6)
+		ZodsRaidAssign.raidsAssignsVersion = string.sub(arg2,7,10)
 		ZodsRaidAssign.otherUsers[sender] = true
 		if ZodsRaidAssign.requestSent and ZodsRaidAssign.requestSent.item == 'rosterVersion' then
 			ZodsRaidAssign.requestSent = nil
 		end
 		if ZodsRaidAssign.rosterVersion() ~= ZodsRaidAssign.raidsRosterVersion then
 			ZRA_vars.roster = {}
+			ZRA_vars.raids = deepcopy(ZodsRaidAssignPublic.raidschema)
+			ZRA_vars.roles = deepcopy(ZodsRaidAssignPublic.roleschema)
+			ZodsRaidAssign.myRosterChanged()
+			table.insert(ZodsRaidAssignPublic.assignUpdateHistory, {update_type = 'roster', sender = sender, mess = 'clear your roster, its out of date'})
 			ZodsRaidAssign.askForRosterPayload()
+		elseif ZodsRaidAssign.raidAssignsVersion() ~= ZodsRaidAssign.raidsAssignsVersion then
+			ZodsRaidAssign.askForBossAssigns()
 		end
 	elseif task == 'rr' then
 		ZodsRaidAssign.sendRosterData(sender)
 	elseif task == 'sr' then
 		if ZodsRaidAssign.rosterVersion() ~= ZodsRaidAssign.raidsRosterVersion then
 			ZodsRaidAssign.requestSent = nil
+			table.insert(ZodsRaidAssignPublic.assignUpdateHistory, {update_type = 'roster', sender = sender, mess = 'updated per roster payload partial'})
 			ZodsRaidAssign.setRosterFromMess(string.sub(arg2,3))
 		end
 	elseif task == 'bu' then
-		ZodsRaidAssign.hearBossAssigns(string.sub(arg2,3))
+		ZodsRaidAssign.hearBossAssigns(string.sub(arg2,3), sender)
+	elseif task == 'ra' then
+		ZodsRaidAssign.sendAllBossAssigns(sender)
 	end
 end
 
@@ -184,23 +262,74 @@ function ZodsRaidAssign.sendRosterData(dest)
 	
 end
 
-function ZodsRaidAssign.hearBossAssigns(mess)
+function ZodsRaidAssign.sendAllBossAssigns(dest)
+	ZodsRaidAssignPublic.sendBossAssigns("Roles", nil, dest)
+	for raidName, raidData in pairs(ZRA_vars.raids) do
+		for bossIndex,bossAssigns in ipairs(raidData) do
+			ZodsRaidAssignPublic.sendBossAssigns(raidName, bossIndex, dest)
+		end
+	end
+end
+
+function ZodsRaidAssign.hearBossAssigns(mess, sender)
 	local raidKey = ZodsRaidAssign.RAID_MAP_BACK[string.sub(mess,1,1)]
 	local bosskey = tonumber(string.sub(mess,2,3))
+	local bossName = nil
+	local BossData = nil
+	if raidKey == "Roles" then
+		BossData = ZRA_vars.roles
+	else
+		bossName = ZRA_vars.raids[raidKey][bosskey].name
+		BossData = ZRA_vars.raids[raidKey][bosskey]
+	end
+	
 	local assignsMess = string.sub(mess,4)
+	local diff = nil
 	local groups = mysplit(assignsMess, '.')
 	for groupInd, colmnsMess in ipairs(groups) do
 		local columns = mysplit(colmnsMess, ',')
+		local groupTitle = BossData[groupInd].title
 		for colInd,membersMess in ipairs(columns) do
 			local members = dicestring(membersMess)
-			if raidKey == "Roles" then
-				ZRA_vars.roles[groupInd].columns[colInd].members = members
-			else
-				ZRA_vars.raids[raidKey][bosskey][groupInd].columns[colInd].members = members
+			local header = BossData[groupInd].columns[colInd].header
+			local thisDiff = setGetDiff(BossData[groupInd].columns[colInd], 'members', members)
+			if thisDiff then
+				if diff then
+					diff = 'multiple changes'
+				else
+					diff = ' g:' .. groupTitle .. ' c:' .. header .. " -"..thisDiff
+				end
 			end
 		end
 	end
-	ZodsRaidAssignPublic.updateUI()
+	if diff then
+		table.insert(ZodsRaidAssignPublic.assignUpdateHistory, {update_type = 'boss', sender = sender, raid = raidKey, boss = bossName or "_", diff = diff})
+		ZodsRaidAssignPublic.dataChanged()
+	end
+end
+
+function setGetDiff(oldVar, key, newAssign)
+	local diff = nil
+	if #(oldVar[key]) > #newAssign then
+		for i,v in ipairs(newAssign) do
+			if v ~= oldVar[key][i] then
+				diff = ZRA_vars.roster[oldVar[key][i]].name .. ' removed from pos ' .. i
+				break
+			end
+		end
+		if not diff then diff = ZRA_vars.roster[oldVar[key][#oldVar[key]]].name .. ' removed from end' end
+	elseif #(oldVar[key]) < #newAssign then
+		for i,v in ipairs(oldVar[key]) do
+			if v ~= newAssign[i] then
+				diff = ZRA_vars.roster[newAssign[i]].name .. ' inserted at pos ' .. i
+				break
+			end
+		end
+		if not diff then diff = ZRA_vars.roster[newAssign[#newAssign]].name .. ' inserted at end' end
+	else
+	end
+	oldVar[key] = newAssign
+	return diff
 end
 
 function ZodsRaidAssignPublic.sendBossAssigns(raidName, bossIndex, dest)
@@ -241,6 +370,18 @@ function ZodsRaidAssign.askForRosterPayload()
 	else
 		ZodsRaidAssign.requestSent = request
 		C_ChatInfo.SendAddonMessage("ZRA", "rr", 'WHISPER', guy_to_ask)
+	end
+end
+
+function ZodsRaidAssign.askForBossAssigns()
+	local guy_to_ask = tablefirstkey(ZodsRaidAssign.otherUsers)
+	if not guy_to_ask then return end
+	local request = {t = GetTime(), item = 'bossAssigns', askee = guy_to_ask}
+	if ZodsRaidAssign.requestSent then
+		table.insert(ZodsRaidAssign.request_queue, request)
+	else
+		ZodsRaidAssign.requestSent = request
+		C_ChatInfo.SendAddonMessage("ZRA", "ra", 'WHISPER', guy_to_ask)
 	end
 end
 
@@ -293,24 +434,35 @@ end
 
 function ZodsRaidAssign.checkSavedVars()
 	if not ZRA_vars then ZRA_vars = {} end
+	if not ZRA_vars.saved_raids then ZRA_vars.saved_raids = {} end
+	if not ZRA_vars.roster then ZRA_vars.roster = {} end
 	--if not ZRA_vars.raids then ZRA_vars.raids = {
-	if true then 
-		ZRA_vars.raids = ZodsRaidAssignPublic.raidschema
-		ZRA_vars.roles = ZodsRaidAssignPublic.roleschema
+	if not ZRA_vars.raids then 
+		ZRA_vars.raids = deepcopy(ZodsRaidAssignPublic.raidschema)
+		ZRA_vars.roles = deepcopy(ZodsRaidAssignPublic.roleschema)
 	end
-	--dummy roster
-	if true then 
-		ZRA_vars.roster = {}
-		local i = 1
-		for r in ZodsRaidAssign.raid_iter() do
-			ZRA_vars.roster[ZodsRaidAssign.getUnusedCode()] = {
-				class = r.class,
-				name = r.name,
-				raidNum = i,
-			}
-			i = i + 1
-		end
-	end
+end
+
+-- Save copied tables in `copies`, indexed by original table.
+function deepcopy(orig, copies)
+    copies = copies or {}
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        if copies[orig] then
+            copy = copies[orig]
+        else
+            copy = {}
+            copies[orig] = copy
+            setmetatable(copy, deepcopy(getmetatable(orig), copies))
+            for orig_key, orig_value in next, orig, nil do
+                copy[deepcopy(orig_key, copies)] = deepcopy(orig_value, copies)
+            end
+        end
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
 end
 
 --codes for player UID, to make pickling easier
@@ -365,205 +517,11 @@ function notFreshInstance()
 end
 
 function ZodsRaidAssign.MakeMacros()
-	ZodsRaidAssign.TankMacro()
-	ZodsRaidAssign.CCMacro()
 	ZodsRaidAssign.BuffMacro()
-	ZodsRaidAssign.TrashHealMacro()
-	ZodsRaidAssign.LuciMacro()
-	ZodsRaidAssign.MagMacro()
-	ZodsRaidAssign.GehMacro()
-	ZodsRaidAssign.GarrMacro()
-	ZodsRaidAssign.DomoMacro()
-	ZodsRaidAssign.SulfMacro()
-	ZodsRaidAssign.RagMacro()
-	ZodsRaidAssign.GoleMaggMacro()
-end
-
-function ZodsRaidAssignPublic.parseRaidPost(post)
-	local tanks, ti = {}, ZodsRaidAssignPublic.tank_iter()
-	local heals, hi = {}, ZodsRaidAssignPublic.tank_heal_iter()
-	local locks, li = {}, ZodsRaidAssign.lock_iter()
-	local melee, mi = {}, ZodsRaidAssign.melee_iter()
-	for i = 1,10 do
-		table.insert(tanks, ti())
-		table.insert(heals, hi())
-		table.insert(locks, li())
-		table.insert(melee, mi())
-	end
-	local temp = string.gsub(post, "%%%a+%d", function(str)
-		local pre = string.sub(str, 2, -2)
-		local ind = tonumber(string.sub(str,-1))
-		if pre == "tank" then 
-			return tanks[ind].name
-		elseif pre == "heal" then 
-			return heals[ind].name
-		elseif pre == "lock" then 
-			return locks[ind].name
-		elseif pre == "melee" then 
-			return melee[ind].name
-		else
-			return str
-		end
-	end)
-	return temp
 end
 
 
-function ZodsRaidAssign.BaronMacro()
-end
 
-function ZodsRaidAssign.ShazzMacro()
-
-end
-
-function ZodsRaidAssign.GoleMaggMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	local hi = ZodsRaidAssignPublic.tank_heal_iter()
-
-	s = '/rw GOLEMAG\n'
-	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on Skull{Skull}, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on X{X}, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
-
-	i = ZodsRaidAssign.GetMakeMacro("ZGolemag")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
-
-
-function ZodsRaidAssign.RagMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	local hi = ZodsRaidAssignPublic.tank_heal_iter()
-
-	s = '/rw RAG\n'
-	s = s .. '/rw  Heal the bosses target ' .. hi().name .. ', ' .. hi().name .. ' and ' .. hi().name ..'\n'
-	s = s .. '/rw  Healing ' .. ti().name .. ' full time is ' .. hi().name .. '\n'
-	s = s .. '/rw  Healing ' .. ti().name .. ' full time is ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ZodsRaidAssign.RemainingHeals(hi) .. ' on raid heals'
-
-	i = ZodsRaidAssign.GetMakeMacro("ZRagnaros")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
-
-function ZodsRaidAssign.SulfMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	local hi = ZodsRaidAssignPublic.tank_heal_iter()
-	local mi = ZodsRaidAssign.melee_iter()
-	local s = '/rw SULF\n'
-	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on {X}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on {Skull}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on {Square}, HEALED BY ' .. hi().name .. '\n'
-	i = ZodsRaidAssign.GetMakeMacro("ZSulf1")
-	ZodsRaidAssign.MacroSetBody(i, s)
-
-	s = ''
-	s = s .. '/rw ' .. ti().name .. ' is on {Moon}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. mi().name .. ' kick {X}\n'
-	s = s .. '/rw ' .. mi().name .. ' kick {Skull}\n'
-	s = s .. '/rw ' .. mi().name .. ' kick {Square}\n'
-	s = s .. '/rw ' .. mi().name .. ' kick {Moon}\n'
-	i = ZodsRaidAssign.GetMakeMacro("ZSulf2")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
-
-function ZodsRaidAssign.DomoMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	local hi = ZodsRaidAssignPublic.tank_heal_iter()
-	local t1 = ti()
-	local t2 = ti()
-	local t3 = ti()
-	local t4 = ti()
-	local t5 = ti()
-
-	local s = '/rw DOMO\n'
-	s = s .. '/rw ' .. t3.name .. ' is on DOMO, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. t4.name .. ' is on {X}->{Moon}->{Diamond}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. t5.name .. ' is on {Skull}->{Star}->{Circle}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. t1.name .. ' is on {Square}, HEALED BY ' .. hi().name .. '\n'
-	i = ZodsRaidAssign.GetMakeMacro("ZDomo1")
-	ZodsRaidAssign.MacroSetBody(i, s)
-
-	local mi = ZodsRaidAssign.mage_iter()
-	s = ''
-	
-	s = s .. '/rw ' .. t2.name .. ' is on {Triangle}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. mi().name .. ' is sheeping {Moon}\n'
-	s = s .. '/rw ' .. mi().name .. ' is sheeping {Star}\n'
-	s = s .. '/rw ' .. mi().name .. ' is sheeping {Diamond}\n'
-	s = s .. '/rw ' .. mi().name .. ' is sheeping {Circle}\n'
-	i = ZodsRaidAssign.GetMakeMacro("ZDomo2")
-	ZodsRaidAssign.MacroSetBody(i, s)
-
-end
-
-function ZodsRaidAssign.GarrMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	local hi = ZodsRaidAssignPublic.tank_heal_iter()
-	local s = '/rw GARR\n'
-	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on {X}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on {Skull}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on {Square}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on {Moon}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on {Triangle}, HEALED BY ' .. hi().name .. '\n'
-	i = ZodsRaidAssign.GetMakeMacro("ZGarr")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
-
-
-function ZodsRaidAssign.GehMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	local hi = ZodsRaidAssignPublic.tank_heal_iter()
-
-	s = '/rw GEHENAS\n'
-	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on Skull{Skull}, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on X{X}, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is BACKUP tank\n'
-
-	i = ZodsRaidAssign.GetMakeMacro("ZGehns")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
-
-function ZodsRaidAssign.LuciMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	local hi = ZodsRaidAssignPublic.tank_heal_iter()
-
-	s = '/rw LUCI\n'
-	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. ' and ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on Skull{Skull}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is on X{X}, HEALED BY ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is BACKUP tank\n'
-	s = s .. '/rw DISPEL MAGIC/CURSE\n'
-
-	i = ZodsRaidAssign.GetMakeMacro("ZLuci")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
-
-
-function ZodsRaidAssign.MagMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	local hi = ZodsRaidAssignPublic.tank_heal_iter()
-
-	local s = '/rw MAG\n'
-	s = s .. '/rw ' .. ti().name .. ' is on BOSS, HEALED BY ' .. hi().name .. ', ' .. hi().name .. ', ' .. hi().name .. '\n'
-	s = s .. '/rw ' .. ti().name .. ' is BACKUP tank\n'
-	s = s .. '/rw ' .. ZodsRaidAssign.RemainingHeals(hi) .. ' on raid heals'
-
-	i = ZodsRaidAssign.GetMakeMacro("ZMag")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
-
-function ZodsRaidAssign.RemainingHeals(hi)
-	local s = ''
-	n = hi()
-	repeat
-		s = s .. n.name .. ', '
-		n = hi()
-	until( n.name == 'missing healer' )
-	s = string.sub(s, 0, #s - 2)
-	return s
-end
 
 function ZodsRaidAssign.GroupDistribute(numGroups,numBuffers)
 	sets = {}
@@ -582,35 +540,6 @@ function ZodsRaidAssign.GroupDistribute(numGroups,numBuffers)
 	return sets
 end
 
-function ZodsRaidAssign.TrashHealMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	local hi = ZodsRaidAssignPublic.tank_heal_iter()
-
-	s = '/rw TRASH HEAL ASSIGNMENTS\n'
-	for i = 1, 3 do
-		tank = ti()
-
-		s = s .. '/rw '  .. tank.name .. ' is being healed by '
-		for i = 1, 2 do
-			healer = hi()
-			s = s .. healer.name .. ' , '
-		end
-		s = string.sub(s, 0, #s - 2)
-		s = s .. '\n'
-	end
-	
-	s = s .. '/rw '
-	n = hi()
-	repeat
-		s = s .. n.name .. ', '
-		n = hi()
-	until( n.name == 'missing healer' )
-	s = string.sub(s, 0, #s - 2)
-	s = s .. ' on raid heals'
-
-	i = ZodsRaidAssign.GetMakeMacro("ZTrashHeals")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
 
 function ZodsRaidAssign.GetMakeMacro(name)
 	mi = GetMacroIndexByName(name)
@@ -626,23 +555,6 @@ function ZodsRaidAssign.MacroSetBody(i, body)
 	EditMacro(i, name, texture, body)
 end
 
-function ZodsRaidAssign.TankMacro()
-	local ti = ZodsRaidAssignPublic.tank_iter()
-	shapes = {
-		'X {X}',
-		'skull {Skull}',
-		'Square {Square}',
-		'Moon {Moon}',
-		'Triangle {Triangle}',
-	}
-	s = '/rw TANK ASSIGNMENTS \n'
-	for _, shape in pairs(shapes) do
-		tank = ti()
-		s = s .. '/rw '  .. tank.name .. ' tanking ' .. shape .. '\n'
-	end
-	i = ZodsRaidAssign.GetMakeMacro("ZTankShapes")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
 
 ZodsRaidAssign.SHAPES = {
 	skull = true,
@@ -663,21 +575,7 @@ function ZodsRaidAssignPublic.shape(s)
 	end
 end
 
-function ZodsRaidAssign.CCMacro()
-	local li = ZodsRaidAssign.lock_iter()
-	shapes = {
-		'Diamond {Diamond}',
-		'Circle {Circle}',
-		'Star {Star}',
-	}
-	s = '/rw LOCK BANISH ASSIGNMENTS\n'
-	for _, shape in pairs(shapes) do
-		lock = li()
-		s = s .. '/rw '  .. lock.name .. ' banishing ' .. shape .. '\n'
-	end
-	i = ZodsRaidAssign.GetMakeMacro("ZLockShapes")
-	ZodsRaidAssign.MacroSetBody(i, s)
-end
+
 
 function ZodsRaidAssign.BuffMacro()
 	local numgroups = 8
@@ -731,7 +629,6 @@ function ZodsRaidAssign.BuffMacro()
 end
 
 function ZodsRaidAssign.GetTanks()
-
 	return shallowcopy(ZRA_vars.roles[1].columns[1].members)
 end
 
@@ -788,178 +685,6 @@ function ZodsRaidAssignPublic.tank_iter()
 		end
 end
 
-function ZodsRaidAssign.GetLocks()
-	return shallowcopy(ZRA_vars.raid.locks)
-end
-
-function ZodsRaidAssign.lock_iter()
-	local unass_locks = ZodsRaidAssign.GetLocks()
-	return 
-		function ()
-			if #unass_locks > 0 then
-				return table.remove(unass_locks, 1)
-			else
-				return {name='missing warlock'}
-			end
-		end
-end
-
-function ZodsRaidAssign.GetMelee()
-	return shallowcopy(ZRA_vars.raid.melee)
-end
-
-function ZodsRaidAssign.melee_iter()
-	local unass = ZodsRaidAssign.GetMelee()
-	return 
-		function ()
-			if #unass > 0 then
-				return table.remove(unass, 1)
-			else
-				return {name='missing melee'}
-			end
-		end
-end
-
-function ZodsRaidAssign.GetMages()
-	return shallowcopy(ZRA_vars.raid.mages)
-end
-
-function ZodsRaidAssign.mage_iter()
-	local unass = ZodsRaidAssign.GetMages()
-	return 
-		function ()
-			if #unass > 0 then
-				return table.remove(unass, 1)
-			else
-				return {name='missing mage'}
-			end
-		end
-end
-
-function ZodsRaidAssign.GetDruids()
-	return shallowcopy(ZRA_vars.raid.healers.druids)
-end
-
-function ZodsRaidAssign.druid_iter()
-	local unass = ZodsRaidAssign.GetDruids()
-	return 
-		function ()
-			if #unass > 0 then
-				return table.remove(unass, 1)
-			else
-				return {name='missing druid'}
-			end
-		end
-end
-
-function ZodsRaidAssign.GetPriests()
-	return shallowcopy(ZRA_vars.raid.healers.priests)
-end
-
-function ZodsRaidAssign.priest_iter()
-	unass = ZodsRaidAssign.GetPriests()
-	return 
-		function ()
-			if #unass > 0 then
-				return table.remove(unass, 1)
-			else
-				return {name='missing priest'}
-			end
-		end
-end
-
-function ZodsRaidAssign.PurgeRaid()
-	local raid_mems = {}
-	for i=1,GetNumGroupMembers() do
-		local name, _, _, _, _, class = GetRaidRosterInfo(i)
-		raid_mems[name] = true
-	end
-	for n in ZodsRaidAssign.raid_iter() do
-		if raid_mems[n.name] == nil then
-			ZodsRaidAssign.DeleteRaider(n)
-		end
-	end
-end
-
-function ZodsRaidAssign.DeleteRaider(n, raid)
-	if not raid then raid = ZRA_vars.raid end
-	for i,v in pairs(raid) do
-		if v.name then
-			if v.name == n then
-				raid[i] = nil
-			end
-		elseif type(v) == 'table' then
-			ZodsRaidAssign.DeleteRaider(n, v)
-		end
-	end
-	return false
-end
-
-function ZodsRaidAssign.SnapShotRaid()
-	local raid = ZRA_vars.raid or {tanks = {}, healers = {pallies = {}, priests = {}, druids = {}}, mages = {}, locks = {}, hunters = {}, melee = {}}
-	for i=1,GetNumGroupMembers() do
-		local name, _, _, _, _, class = GetRaidRosterInfo(i)
-		 ZodsRaidAssign.AssumeRole(raid, {name=name, class=class})
-	end
-	return raid
-end
-
-function ZodsRaidAssign.AssumeRole(raid, member)
-	if ZodsRaidAssign.MemberIsInRaidAlready(member, raid) then return end
-	if member.class == 'WARRIOR' then
-		table.insert(raid.tanks, member)
-	elseif member.class == 'PALADIN' then
-		table.insert(raid.healers.pallies, member)
-	elseif member.class == 'PRIEST' then
-		table.insert(raid.healers.priests, member)
-	elseif member.class == 'DRUID' then
-		table.insert(raid.healers.druids, member)
-	elseif member.class == 'WARLOCK' then
-		table.insert(raid.locks, member)
-	elseif member.class == 'MAGE' then
-		table.insert(raid.mages, member)
-	elseif member.class == 'HUNTER' then
-		table.insert(raid.hunters, member)
-	elseif member.class == 'ROGUE' then
-		table.insert(raid.melee, member)
-	else 
-		print('wtf is ' .. member.class .. ' class')
-	end
-end
-
-function ZodsRaidAssign.raid_iter()
-	local index = nil
-	local subindex = nil
-	local groups = {
-		ZRA_vars.raid.tanks,
-		ZRA_vars.raid.melee,
-		ZRA_vars.raid.hunters,
-		ZRA_vars.raid.locks,
-		ZRA_vars.raid.mages,
-		ZRA_vars.raid.healers.pallies,
-		ZRA_vars.raid.healers.druids,
-		ZRA_vars.raid.healers.priests,
-	}
-	index = next(groups, nil)
-	
-	return function()
-		subindex = next(groups[index], subindex)
-		if subindex then
-			return groups[index][subindex]
-		else
-			repeat
-			index = next(groups, index)
-			until (not index) or #groups[index] >0
-			if index then
-				subindex = next(groups[index], subindex)
-				if subindex then
-					return groups[index][subindex]
-				end
-			end
-		end
-
-	end
-end
 
 function ZodsRaidAssignPublic.raid_iter()
 	local key = nil
@@ -979,18 +704,29 @@ function ZodsRaidAssignPublic.loadMembers()
 	for k,v in pairs(ZRA_vars.roster) do
 		reverse_ind[v.name] = k
 	end
-	for i=1,GetNumGroupMembers() do
-		local name, _, _, _, _, class = GetRaidRosterInfo(i)
+	if IsInGroup() then
+		for i=1,GetNumGroupMembers() do
+			local name, _, _, _, _, class = GetRaidRosterInfo(i)
+			if not reverse_ind[name] then
+				ZRA_vars.roster[ZodsRaidAssign.getUnusedCode()] = {
+				class = class,
+				name = name,
+				raidNum = i,
+				}
+			end
+		end
+	else
+		local name = UnitName("player")
+		local class = string.upper(UnitClass('player'))
 		if not reverse_ind[name] then
 			ZRA_vars.roster[ZodsRaidAssign.getUnusedCode()] = {
 			class = class,
 			name = name,
-			raidNum = i,
+			raidNum = 1,
 			}
 		end
 	end
 	ZodsRaidAssign.pushNewRoster()
-	
 end
 
 function ZodsRaidAssign.pushNewRoster()
@@ -1022,6 +758,8 @@ end
 
 function ZodsRaidAssignPublic.dropMembers()
 	ZRA_vars.roster = {}
+	ZRA_vars.raids = deepcopy(ZodsRaidAssignPublic.raidschema)
+	ZRA_vars.roles = deepcopy(ZodsRaidAssignPublic.roleschema)
 	ZodsRaidAssignPublic.loadMembers()
 end
 
@@ -1034,67 +772,92 @@ function ZodsRaidAssignPublic.getCodeFromName(n)
 end
 
 
-
-function ZodsRaidAssign.MemberIsInRaidAlready(member, raid)
-	for i,v in pairs(raid) do
-		if v.name then
-			if v.name == member.name then
-				return true 
-			end
-		else
-			if ZodsRaidAssign.MemberIsInRaidAlready(member, v) then
-				return true
-			end
-		end
-	end
-	return false
-end
-
 --- slash handler
 SLASH_ZRAIDASSIGN1 = "/zra"
 SlashCmdList["ZRAIDASSIGN"] = function(msg)
 	local command, arg1, arg2, arg3 = strsplit(" ",msg)
-	if command == '' then
-		ZodsRaidAssign.PrintHelp()
-	end
-	if (command == "re") then
-		local s = ZodsRaidAssign.GroupDistribute(8,4)
-		print(dump(s))
-	elseif (command == "load") then
-		ZRA_vars.raid = ZodsRaidAssign.SnapShotRaid()
-		print('loaded')
-	elseif (command == "purge") then
-		ZodsRaidAssign.PurgeRaid()
-		print('purged')
-	elseif (command == "rf") then
-		ZRA_vars.raid = ZodsRaidAssign.SnapShotRaid()
-		ZodsRaidAssign.PurgeRaid()
-		print('refreshed')
+	if command == 'menu' or command == '' or (not command) then
+		ZodsRaidAssignPublic.OpenMenu()
 	elseif (command == 'clear') then
-		ZRA_vars.raid = {tanks = {}, healers = {pallies = {}, priests = {}, druids = {}}, mages = {}, locks = {}, hunters = {}, melee = {}}
+		ZRA_vars.raids = deepcopy(ZodsRaidAssignPublic.raidschema)
+		ZRA_vars.roles = deepcopy(ZodsRaidAssignPublic.roleschema)
+		ZRA_vars.roster = {}
+		ZodsRaidAssign.myRosterChanged()
+		ZodsRaidAssign.pushNewRoster()
 		print('cleared')
-	elseif (command == 'print') then
-		for n in ZodsRaidAssign.raid_iter() do
-			print(n.name)
-		end
-	elseif (command == 'macros') then
-		ZodsRaidAssign.MakeMacros()
-		print('macros made')
+	elseif (command == 'debug') then
+		ZodsRaidAssignPublic.debugging = true
+		print('debugging')
+	elseif (command == 'dontgray') then
+		ZodsRaidAssignPublic.dontgray = true
+		print('gray off')
 	elseif (command == 'i') then
+		print('Recent instances')
 		ZodsRaidAssign.ParseEvents()
 	elseif (command == 'wipe') then
 		notFreshInstance()
 		print('wipe')
-	elseif (command == 'menu') then
-		ZodsRaidAssignPublic.OpenMenu()
-	elseif (command == 'test') then
-		print(ZodsRaidAssign.raidsRosterVersion)
-	else 
+	elseif (command == 'test1') then
+		ZRA_vars.roster = ZodsRaidAssignPublic.testroster1
+		ZodsRaidAssign.myRosterChanged()
+		ZodsRaidAssign.pushNewRoster()
+		print('using test roster 1')
+	elseif (command == 'test2') then
+		ZRA_vars.roster = ZodsRaidAssignPublic.testroster2
+		ZodsRaidAssign.myRosterChanged()
+		ZodsRaidAssign.pushNewRoster()
+		print('using test roster 2')
+	elseif (command == 'save') then
+		if arg1 then 
+			print('saving ' .. arg1)
+			ZRA_vars.saved_raids[arg1] = {}
+			ZRA_vars.saved_raids[arg1].roster = deepcopy(ZRA_vars.roster)
+			ZRA_vars.saved_raids[arg1].roles = deepcopy(ZRA_vars.roles)
+			ZRA_vars.saved_raids[arg1].raids = deepcopy(ZRA_vars.raids)
+		else
+			print('need a name to save by')
+		end
+	elseif (command == 'load') then
+		if arg1 then 
+			if ZRA_vars.saved_raids and ZRA_vars.saved_raids[arg1] then
+				print('loading ' .. arg1)
+				ZRA_vars.roster = ZRA_vars.saved_raids[arg1].roster
+				ZRA_vars.roles = ZRA_vars.saved_raids[arg1].roles
+				ZRA_vars.raids = ZRA_vars.saved_raids[arg1].raids
+				table.insert(ZodsRaidAssignPublic.assignUpdateHistory, {update_type = 'roster', sender = "ME", mess = 'loaded a stored raid, ' .. arg1})
+				ZodsRaidAssign.myRosterChanged()
+				ZodsRaidAssign.pushNewRoster()
+			else
+				print('coudlnt load raid named ' .. arg1 '. check the name')
+				print("saved raids available to load")
+				for k,_ in pairs(ZRA_vars.saved_raids or {}) do
+					print(k)
+				end
+			end
+		else
+			print("saved raids available to load")
+			for k,_ in pairs(ZRA_vars.saved_raids or {}) do
+				print(k)
+			end
+		end
+	elseif (command == 'delete') then
+		if arg1 then 
+			print('deleting ' .. arg1)
+			ZRA_vars.saved_raids[arg1] = nil
+		else
+			print("saved raids available to delete")
+			for k,_ in pairs(ZRA_vars.saved_raids or {}) do
+				print(k)
+			end
+		end
+	else
+		ZodsRaidAssign.PrintHelp()
 	end
 end
 
 function ZodsRaidAssign.PrintHelp()
-	print('load, clear, purge, rf, macros, i, wipe, print, menu')
+	print('load/save/delete {name}')
+	print('\'i\' shows instances, \'wipe\' removes last zone out, test{1,2} for test raid, clear, dontgray, debug')
 end
 
 function dump(o)

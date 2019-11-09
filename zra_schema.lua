@@ -1138,3 +1138,425 @@ ZodsRaidAssignPublic.announcements = {
         end,
     }
 }
+
+
+ZodsRaidAssignPublic.testroster1 = {
+    ["a"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Scottyflip",
+        ["raidNum"] = 0,
+    },
+    ["c"] = {
+        ["class"] = "DRUID",
+        ["name"] = "Sprb",
+        ["raidNum"] = 0,
+    },
+    ["b"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Kalleia",
+        ["raidNum"] = 0,
+    },
+    ["e"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Dkd",
+        ["raidNum"] = 0,
+    },
+    ["d"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Door",
+        ["raidNum"] = 0,
+    },
+    ["g"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Stuot",
+        ["raidNum"] = 0,
+    },
+    ["f"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Zodicus",
+        ["raidNum"] = 0,
+    },
+    ["i"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Indomitable",
+        ["raidNum"] = 0,
+    },
+    ["h"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Appolyin",
+        ["raidNum"] = 0,
+    },
+    ["k"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Irishdrunk",
+        ["raidNum"] = 0,
+    },
+    ["j"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Marvelous",
+        ["raidNum"] = 0,
+    },
+    ["m"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Noldori",
+        ["raidNum"] = 0,
+    },
+    ["l"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Duncanldaho",
+        ["raidNum"] = 0,
+    },
+    ["o"] = {
+        ["class"] = "HUNTER",
+        ["name"] = "Khanitus",
+        ["raidNum"] = 0,
+    },
+    ["n"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Nottoxic",
+        ["raidNum"] = 0,
+    },
+    ["q"] = {
+        ["class"] = "HUNTER",
+        ["name"] = "Garmden",
+        ["raidNum"] = 0,
+    },
+    ["p"] = {
+        ["class"] = "HUNTER",
+        ["name"] = "Sylrendas",
+        ["raidNum"] = 0,
+    },
+    ["s"] = {
+        ["class"] = "WARLOCK",
+        ["name"] = "Thordi",
+        ["raidNum"] = 0,
+    },
+    ["r"] = {
+        ["class"] = "HUNTER",
+        ["name"] = "Plebos",
+        ["raidNum"] = 0,
+    },
+    ["u"] = {
+        ["class"] = "WARLOCK",
+        ["name"] = "ßæns",
+        ["raidNum"] = 0,
+    },
+    ["t"] = {
+        ["class"] = "WARLOCK",
+        ["name"] = "Imadottin",
+        ["raidNum"] = 0,
+    },
+    ["w"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Mista",
+        ["raidNum"] = 0,
+    },
+    ["v"] = {
+        ["class"] = "WARLOCK",
+        ["name"] = "Jeshuah",
+        ["raidNum"] = 0,
+    },
+    ["y"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Digger",
+        ["raidNum"] = 0,
+    },
+    ["x"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Ssxtricky",
+        ["raidNum"] = 0,
+    },
+    ["A"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Phifey",
+        ["raidNum"] = 0,
+    },
+    ["C"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Keen",
+        ["raidNum"] = 0,
+    },
+    ["B"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Zookvicious",
+        ["raidNum"] = 0,
+    },
+    ["E"] = {
+        ["class"] = "PALADIN",
+        ["name"] = "Aegis",
+        ["raidNum"] = 0,
+    },
+    ["D"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Kilyra",
+        ["raidNum"] = 0,
+    },
+    ["G"] = {
+        ["class"] = "PALADIN",
+        ["name"] = "Ganklin",
+        ["raidNum"] = 0,
+    },
+    ["F"] = {
+        ["class"] = "PALADIN",
+        ["name"] = "Horizons",
+        ["raidNum"] = 0,
+    },
+    ["I"] = {
+        ["class"] = "DRUID",
+        ["name"] = "Sizequeens",
+        ["raidNum"] = 0,
+    },
+    ["H"] = {
+        ["class"] = "DRUID",
+        ["name"] = "Twomanydabs",
+        ["raidNum"] = 0,
+    },
+    ["K"] = {
+        ["class"] = "DRUID",
+        ["name"] = "Sprb",
+        ["raidNum"] = 0,
+    },
+    ["J"] = {
+        ["class"] = "DRUID",
+        ["name"] = "Edoor",
+        ["raidNum"] = 0,
+    },
+    ["M"] = {
+        ["class"] = "PRIEST",
+        ["name"] = "Uyscuti",
+        ["raidNum"] = 0,
+    },
+    ["L"] = {
+        ["class"] = "PRIEST",
+        ["name"] = "Brendaniel",
+        ["raidNum"] = 0,
+    },
+    ["N"] = {
+        ["class"] = "PRIEST",
+        ["name"] = "Sloanz",
+        ["raidNum"] = 0,
+    },
+}
+
+ZodsRaidAssignPublic.testroster2 = {
+    ["a"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Scottyflip",
+        ["raidNum"] = 0,
+    },
+    ["c"] = {
+        ["class"] = "DRUID",
+        ["name"] = "Sprb",
+        ["raidNum"] = 0,
+    },
+    ["b"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Kalleia",
+        ["raidNum"] = 0,
+    },
+    ["e"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Dkd",
+        ["raidNum"] = 0,
+    },
+    ["d"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Door",
+        ["raidNum"] = 0,
+    },
+    ["g"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Zodicus",
+        ["raidNum"] = 0,
+    },
+    ["f"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Badtank",
+        ["raidNum"] = 0,
+    },
+    ["i"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Stuot",
+        ["raidNum"] = 0,
+    },
+    ["h"] = {
+        ["class"] = "WARRIOR",
+        ["name"] = "Bde",
+        ["raidNum"] = 0,
+    },
+    ["k"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Indomitable",
+        ["raidNum"] = 0,
+    },
+    ["j"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Appolyin",
+        ["raidNum"] = 0,
+    },
+    ["m"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Irishdrunk",
+        ["raidNum"] = 0,
+    },
+    ["l"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Marvelous",
+        ["raidNum"] = 0,
+    },
+    ["o"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Noldori",
+        ["raidNum"] = 0,
+    },
+    ["n"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Duncanldaho",
+        ["raidNum"] = 0,
+    },
+    ["q"] = {
+        ["class"] = "HUNTER",
+        ["name"] = "Khanitus",
+        ["raidNum"] = 0,
+    },
+    ["p"] = {
+        ["class"] = "ROGUE",
+        ["name"] = "Nottoxic",
+        ["raidNum"] = 0,
+    },
+    ["s"] = {
+        ["class"] = "HUNTER",
+        ["name"] = "Garmden",
+        ["raidNum"] = 0,
+    },
+    ["r"] = {
+        ["class"] = "HUNTER",
+        ["name"] = "Sylrendas",
+        ["raidNum"] = 0,
+    },
+    ["u"] = {
+        ["class"] = "WARLOCK",
+        ["name"] = "Thordi",
+        ["raidNum"] = 0,
+    },
+    ["t"] = {
+        ["class"] = "HUNTER",
+        ["name"] = "Plebos",
+        ["raidNum"] = 0,
+    },
+    ["w"] = {
+        ["class"] = "WARLOCK",
+        ["name"] = "ßæns",
+        ["raidNum"] = 0,
+    },
+    ["v"] = {
+        ["class"] = "WARLOCK",
+        ["name"] = "Imadottin",
+        ["raidNum"] = 0,
+    },
+    ["y"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Mista",
+        ["raidNum"] = 0,
+    },
+    ["x"] = {
+        ["class"] = "WARLOCK",
+        ["name"] = "Jeshuah",
+        ["raidNum"] = 0,
+    },
+    ["A"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Ssxtricky",
+        ["raidNum"] = 0,
+    },
+    ["C"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Phifey",
+        ["raidNum"] = 0,
+    },
+    ["B"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Digger",
+        ["raidNum"] = 0,
+    },
+    ["E"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Keen",
+        ["raidNum"] = 0,
+    },
+    ["D"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Zookvicious",
+        ["raidNum"] = 0,
+    },
+    ["G"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Dwonder",
+        ["raidNum"] = 0,
+    },
+    ["F"] = {
+        ["class"] = "MAGE",
+        ["name"] = "Kilyra",
+        ["raidNum"] = 0,
+    },
+    ["I"] = {
+        ["class"] = "PALADIN",
+        ["name"] = "Horizons",
+        ["raidNum"] = 0,
+    },
+    ["H"] = {
+        ["class"] = "PALADIN",
+        ["name"] = "Aegis",
+        ["raidNum"] = 0,
+    },
+    ["K"] = {
+        ["class"] = "PALADIN",
+        ["name"] = "Brecon",
+        ["raidNum"] = 0,
+    },
+    ["J"] = {
+        ["class"] = "PALADIN",
+        ["name"] = "Ganklin",
+        ["raidNum"] = 0,
+    },
+    ["M"] = {
+        ["class"] = "PALADIN",
+        ["name"] = "Astraea",
+        ["raidNum"] = 0,
+    },
+    ["L"] = {
+        ["class"] = "PALADIN",
+        ["name"] = "Xeniko",
+        ["raidNum"] = 0,
+    },
+    ["O"] = {
+        ["class"] = "DRUID",
+        ["name"] = "Edoor",
+        ["raidNum"] = 0,
+    },
+    ["N"] = {
+        ["class"] = "DRUID",
+        ["name"] = "Twomanydabs",
+        ["raidNum"] = 0,
+    },
+    ["Q"] = {
+        ["class"] = "PRIEST",
+        ["name"] = "Brendaniel",
+        ["raidNum"] = 0,
+    },
+    ["P"] = {
+        ["class"] = "DRUID",
+        ["name"] = "Sizequeens",
+        ["raidNum"] = 0,
+    },
+    ["S"] = {
+        ["class"] = "PRIEST",
+        ["name"] = "Sloanz",
+        ["raidNum"] = 0,
+    },
+    ["R"] = {
+        ["class"] = "PRIEST",
+        ["name"] = "Hp",
+        ["raidNum"] = 0,
+    },
+}
