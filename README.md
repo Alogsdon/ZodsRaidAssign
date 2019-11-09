@@ -29,6 +29,10 @@ hit the populate button at the bottom left to add all of your current raid membe
 Now you can do the role assignments. It has an autofill feature to save you some time. Hit autofill at the top left and it will assume some roles for people. These role assignments will be used to generate raid assignments in other tabs. Adjust your tanks/healers in the order you want them to be assigned. (i.e. put your main tank at the top of the column and so on, likewise for healers) You can just click and drag them to where you want them.
 ![roles tab](https://github.com/Alogsdon/ZodsRaidAssign/blob/master/images/RolesTab.png)
 <br>
-Now go to a raid tab (e.g. Molten Core) There is a dropdown for all the bosses, you can always Auto Fill these assignments. Hit "Post" to post the assignments in a raid warning (or just raid if you dont have assistant). These assignments should be synced up with other users who are using the addon. If you think someone else is messing with assignments, you can check the "Log" tab, it shows pretty much everything you or other people changed.
+Now go to a raid tab (e.g. Molten Core) There is a dropdown for all the bosses, you can always Auto Fill these assignments. Hit "Post" to post the assignments in a raid warning (or just raid if you dont have assistant). 
+![roles tab](https://github.com/Alogsdon/ZodsRaidAssign/blob/master/images/Gehennas.png)
+<br>
+These assignments are automatically synced up with other users who are using the addon. If you think someone else is messing with assignments, you can check the "Log" tab, it shows pretty much everything you or other people changed.
+![roles tab](https://github.com/Alogsdon/ZodsRaidAssign/blob/master/images/Log.png)
 
 
