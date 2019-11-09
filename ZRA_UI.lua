@@ -813,9 +813,11 @@ ZodsRaidAssign.scriptframe:SetScript("OnUpdate", ZodsRaidAssign.onUpdate)
 
 function ZodsRaidAssignPublic.OpenMenu()
 	ZodsRaidAssignPublic.updateRaidNums()
-	
 	if not ZodsRaidAssign.current_tab then 
 		ZodsRaidAssign.tabClicked("Roles")()
+	end
+	if ZodsRaidAssignPublic.assignmentsAreBlank(ZodsRaidAssign.current_tab or "Roles", ZodsRaidAssign.getDropdownInd()) then
+		ZRAGenAssBtn:GetScript("OnClick")()
 	end
 	ZRALayoutFrame:Show()
 	ZodsRaidAssignPublic.updateRoster()
