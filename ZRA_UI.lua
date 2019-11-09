@@ -290,15 +290,15 @@ function ZodsRaidAssign.onLoad()
 	gen_ass_btn:SetHeight(30)
 	gen_ass_btn:SetScript("OnClick", function()
 		if ZodsRaidAssign.current_tab == "Roles" then
-			print('generating assignments for ' .. ZodsRaidAssign.current_tab)
+			--print('generating assignments for ' .. ZodsRaidAssign.current_tab)
 			ZodsRaidAssignPublic.funcs.Roles()
 			ZodsRaidAssignPublic.sendBossAssigns("Roles")
 		else
-			print('generating assignments for ' .. ZodsRaidAssign.current_tab .. ' ' .. UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown))
-			ZodsRaidAssignPublic.funcs[ZodsRaidAssign.current_tab][UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)]()
+			--print('generating assignments for ' .. ZodsRaidAssign.current_tab .. ' ' .. ZodsRaidAssign.getDropdownName())
+			ZodsRaidAssignPublic.funcs[ZodsRaidAssign.current_tab][ZodsRaidAssign.getDropdownName()]()
 			ZodsRaidAssignPublic.sendBossAssigns(ZodsRaidAssign.current_tab, ZodsRaidAssign.getDropdownInd())
 		end
-		table.insert(ZodsRaidAssignPublic.assignUpdateHistory, {update_type = 'self', raid = ZodsRaidAssign.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown) or "_", diff = 'I auto filled'})
+		table.insert(ZodsRaidAssignPublic.assignUpdateHistory, {update_type = 'self', raid = ZodsRaidAssign.current_tab, boss =  ZodsRaidAssign.getDropdownName() or "_", diff = 'I auto filled'})
 		ZodsRaidAssignPublic.updateUI()
 	end)
 	gen_ass_btn:Show()
@@ -310,12 +310,15 @@ function ZodsRaidAssign.onLoad()
 	ZRApost_ass_btn:SetWidth(120)
 	ZRApost_ass_btn:SetHeight(30)
 	ZRApost_ass_btn:SetScript("OnClick", function()
-		print('posting ' .. UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown) .. ' assignments to raid')
+		--print('posting ' .. UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown) .. ' assignments to raid')
 		local phrases = ZodsRaidAssignPublic.announcements[ZodsRaidAssign.current_tab][UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)](ZodsRaidAssign.raid_data)
-		if UnitInRaid("player") then
-
+		if UnitInRaid("player") and (UnitIsGroupAssistant("player") or UnitIsGroupLeader("player")) then
 			for _, line in ipairs(phrases or {}) do
 				SendChatMessage(line ,"RAID_WARNING" )
+			end
+		elseif UnitInRaid("player") then
+			for _, line in ipairs(phrases or {}) do
+				SendChatMessage(line ,"RAID" )
 			end
 		else
 			for _, line in ipairs(phrases or {}) do
@@ -413,6 +416,9 @@ function ZodsRaidAssign.clickDropDown()
 				--print(arg.value)
 				UIDropDownMenu_SetSelectedName(ZRAFightDropDown, arg.value)
 				UIDropDownMenu_SetText(ZRAFightDropDown, arg.value)
+				if ZodsRaidAssignPublic.assignmentsAreBlank(ZodsRaidAssign.current_tab or "Roles", ZodsRaidAssign.getDropdownInd()) then
+					ZRAGenAssBtn:GetScript("OnClick")()
+				end
 				ZodsRaidAssign.showBoss(ZodsRaidAssign.current_tab, ZodsRaidAssign.getDropdownInd())
 			end
 			UIDropDownMenu_AddButton(info)
@@ -422,7 +428,7 @@ end
 
 function ZodsRaidAssign.getDropdownInd()
 	local ind = 1
-	if ZodsRaidAssign.current_tab == "Roles" then
+	if ZodsRaidAssign.current_tab == "Roles" or ZodsRaidAssign.current_tab == "Log" then
 		return -1
 	end
 	for i,v in ipairs(ZRA_vars.raids[ZodsRaidAssign.current_tab]) do
@@ -434,11 +440,18 @@ function ZodsRaidAssign.getDropdownInd()
 	return ind
 end
 
+function ZodsRaidAssign.getDropdownName()
+	if ZodsRaidAssign.current_tab == "Roles" or ZodsRaidAssign.current_tab == "Log" then return end
+	return ZRA_vars.raids[ZodsRaidAssign.current_tab][ZodsRaidAssign.getDropdownInd()].name
+end
+
 function ZodsRaidAssign.tabClicked(key, tabindex)
 	return function()
 		PanelTemplates_SetTab(ZRALayoutFrame, tabindex)
 		ZodsRaidAssign.current_tab = key
-
+		if ZodsRaidAssignPublic.assignmentsAreBlank(ZodsRaidAssign.current_tab or "Roles", ZodsRaidAssign.getDropdownInd()) then
+			ZRAGenAssBtn:GetScript("OnClick")()
+		end
 
 		if key == "Roles" then
 			ZodsRaidAssign.showRoles()

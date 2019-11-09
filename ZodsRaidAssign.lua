@@ -100,7 +100,30 @@ function ZodsRaidAssignPublic.dropMissingAssignments(raid, boss, group, column, 
 	
 end
 
+function ZodsRaidAssignPublic.assignmentsAreBlank(raid, boss)
+	if raid == "Log" then return false end
+	if not(type(boss) == 'number') then
+		boss = ZodsRaidAssign.getBossIndFromName(raid, boss)
+	end
+	local boss_data = nil
+	if raid == "Roles" then
+		boss_data = ZRA_vars.roles
+	else
+		boss_data = ZRA_vars.raids[raid][boss]
+	end
+	for _,group in ipairs(boss_data) do
+		for _,col in ipairs(group.columns) do
+			if #col.members > 0 then
+				return false
+			end
+		end
+		
+	end
+	return true
+end
+
 function ZodsRaidAssign.getBossIndFromName(raid, bossName)
+	if raid == "Roles" then return "_" end
 	for i,v in ipairs(ZRA_vars.raids[raid]) do
 		if v.name == BossName then
 			return i
