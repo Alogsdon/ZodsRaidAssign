@@ -1,8 +1,8 @@
 # ZodsRaidAssign
 <h2>Installation</h2>
-download a release
+download a release<br>
 extract the release to your addon folder<br>
-edit the folder name so it is exactly "ZodsRaidAssign" (i.e. remove the "-1.0" or "-master")<br>
+edit the folder name so it is exactly <code>ZodsRaidAssign</code> (i.e. remove the "-1.0" or "-master")<br>
 <br>
 <h2>Commands</h2>
 <h3>primary commands you may actually use</h3>
