@@ -142,9 +142,6 @@ function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 		if arg1 == "ZRA" then
 			local sender = string.gmatch(arg4,'(%w+)-')() or arg4
 			if sender == UnitName("player") then
-				if ZodsRaidAssignPublic.debugging then
-					print('said ' .. arg2)
-				end
 			else
 				ZodsRaidAssign.HandleRemoteData(arg2, arg3, sender)
 			end
@@ -175,6 +172,16 @@ function ZodsRaidAssign.Greet()
 	ZodsRaidAssign.raidsAssignsVersion = nil
 	C_ChatInfo.SendAddonMessage("ZRA", "hello", 'RAID')
 end
+
+_oldC_ChatInfoSendAddonMessage = C_ChatInfo.SendAddonMessage
+
+C_ChatInfo.SendAddonMessage = function(arg1, arg2, arg3, arg4, ... )
+	if arg1 == "ZRA" and ZodsRaidAssignPublic.debugging then
+		print("ME->" .. arg3 .. (arg4 or '') ..": " .. arg2)
+	end
+	return _oldC_ChatInfoSendAddonMessage(arg1, arg2, arg3, arg4,...)
+end
+
 
 function ZodsRaidAssign.reGreet()
 	ZodsRaidAssign.otherUsers = {}
@@ -417,7 +424,7 @@ end
 
 function ZodsRaidAssign.setRosterFromMess(mess)
 	for entry in string.gmatch(mess, '([^,]+)') do
-		if string.len(entry) == 2 then
+		if string.len(entry) <= 3 then
 			local rnum = tonumber(string.sub(entry,2))
 			local name, _, _, _, _, class = GetRaidRosterInfo(rnum)
 			local dude = {
@@ -792,6 +799,7 @@ function ZodsRaidAssignPublic.getCodeFromName(n)
 			return k
 		end
 	end
+	error("out of player codes")
 end
 
 
