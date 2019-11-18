@@ -8,7 +8,7 @@ edit the folder name so it is exactly <code>ZodsRaidAssign</code> (i.e. remove t
 <h3>primary commands you may actually use</h3>
 <code>/zra</code> opens assignment window<br>
 <code>/zra save {tag}</code> saves your current raid assignments so you can load later<br>
-<code>/zra load {tag}</code> loads a saved raid assignment. if you leave {tag} blank, it will list saved tags to you<br>
+<code>/zra load {tag}</code> loads a saved raid assignment. if you leave {tag} blank, it will print a list of saved tags<br>
 
 <h3>some extra commands that are in there</h3>
 <code>/zra delete {tag</code> deletes an old raid assignment. idk why you'd want to. maybe you think the file is too big or something<br>
