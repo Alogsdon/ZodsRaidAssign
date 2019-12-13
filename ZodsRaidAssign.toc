@@ -1,8 +1,8 @@
 ## Title: ZodsRaidAssign
-## Interface: 20408
+## Interface: 11303
 ## Notes: raid assignment tool
-## Author: you mom
-
+## Author: Zodicus
+## Version: 1.02
 ## SavedVariables: ZRA_vars
 embeds.xml
 
