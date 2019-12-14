@@ -65,6 +65,10 @@ function ZRA.onLoad()
 		table.insert(ZRA.CODES, string.sub(str, i, i))
 		ZRA.LETTER_MAP[string.sub(str, i, i)] = i
 	end
+	if (not ZRA_vars.schema_version) or ZRA_vars.schema_version < ZRA.schema_version then
+		ZRA.wipeVars()
+		ZRA_vars.schema_version = ZRA.schema_version
+	end
 	ZRA.assignUpdateHistory = {}
 	ZRA.checkSavedVars()
 	ZRA.Greet()
@@ -241,10 +245,7 @@ function ZRA.HandleRemoteData(arg2, arg3, arg4)
 			ZRA.requestSent = nil
 		end
 		if ZRA.rosterVersion() ~= ZRA.raidsRosterVersion then
-			ZRA_vars.roster = {}
-			ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
-			ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
-			ZRA.myRosterChanged()
+			ZRA.wipeVars()
 			table.insert(ZRA.assignUpdateHistory, {update_type = 'roster', sender = sender, mess = 'clear your roster, its out of date'})
 			ZRA.askForRosterPayload()
 		elseif ZRA.raidAssignsVersion() ~= ZRA.raidsAssignsVersion then
@@ -263,6 +264,13 @@ function ZRA.HandleRemoteData(arg2, arg3, arg4)
 	elseif task == 'ra' then
 		ZRA.sendAllBossAssigns(sender)
 	end
+end
+
+function ZRA.wipeVars()
+	ZRA_vars.roster = {}
+	ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
+	ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
+	ZRA.myRosterChanged()
 end
 
 function ZRA.sendRosterData(dest)
@@ -481,9 +489,9 @@ function ZRA.deepcopy(orig, copies)
         else
             copy = {}
             copies[orig] = copy
-            setmetatable(copy, deepcopy(getmetatable(orig), copies))
+            setmetatable(copy, ZRA.deepcopy(getmetatable(orig), copies))
             for orig_key, orig_value in next, orig, nil do
-                copy[deepcopy(orig_key, copies)] = deepcopy(orig_value, copies)
+                copy[ZRA.deepcopy(orig_key, copies)] = ZRA.deepcopy(orig_value, copies)
             end
         end
     else -- number, string, boolean, etc
@@ -761,7 +769,7 @@ function ZRA.pushNewRoster()
 end
 
 function ZRA.myRosterChanged()
-	if ZRALayoutFrame:IsShown() then 
+	if ZRALayoutFrame and ZRALayoutFrame:IsShown() then 
 		ZRA.OpenMenu()
 	end
 end

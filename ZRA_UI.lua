@@ -3,7 +3,7 @@ local addonName, ZRA = ...
 
 ZRA.lastColumnId = 0
 
-function ZRA.onUpdate()
+function ZRA.onUpdateUI()
 	if ZDragframe:IsVisible() then
 		local f = ZRA.getMouseFrame(ZRA.column_frames)
 		if not f then f = {id = 0} end
@@ -785,8 +785,8 @@ end
 
 ZRA.scriptframe = CreateFrame("Frame")
 ZRA.scriptframe:RegisterEvent("ADDON_LOADED")
-ZRA.scriptframe:SetScript("OnEvent", ZRA.onEvent)
-ZRA.scriptframe:SetScript("OnUpdate", ZRA.onUpdate)
+
+ZRA.scriptframe:SetScript("OnUpdate", ZRA.onUpdateUI)
 
 
 

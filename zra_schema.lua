@@ -1,6 +1,7 @@
 
 local addonName, ZRA = ...
 
+ZRA.schema_version = 1.0
 --ZRA_vars.roles 
 ZRA.roleschema = {
     {
@@ -656,6 +657,71 @@ ZRA.raidschema = {
                 }
             }
         },
+        {
+            name = 'Dog_Pack',
+            {
+                title = 'Skull',
+                columns = {
+                    {
+                        header = 'Tank',
+                        members = {}
+                    },
+                    {
+                        header = 'Heals',
+                        members = {}
+                    }
+                }
+            },
+            {
+                title = 'X',
+                columns = {
+                    {
+                        header = 'Tank',
+                        members = {}
+                    },
+                    {
+                        header = 'Heals',
+                        members = {}
+                    }
+                }
+            },{
+                title = 'Square',
+                columns = {
+                    {
+                        header = 'Tank',
+                        members = {}
+                    },
+                    {
+                        header = 'Heals',
+                        members = {}
+                    }
+                }
+            },{
+                title = 'Moon',
+                columns = {
+                    {
+                        header = 'Tank',
+                        members = {}
+                    },
+                    {
+                        header = 'Heals',
+                        members = {}
+                    }
+                }
+            },{
+                title = 'Triangle',
+                columns = {
+                    {
+                        header = 'Tank',
+                        members = {}
+                    },
+                    {
+                        header = 'Heals',
+                        members = {}
+                    }
+                }
+            },
+        },
     }
 }
 
@@ -683,6 +749,14 @@ ZRA.funcs = {
                 end
             end
             ZRA_vars.raids['Molten Core'][1][5].columns[1].members = {ti(), ti()}
+        end,
+        Dog_Pack = function()
+            local ti = ZRA.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            for i = 1, 5 do
+                ZRA_vars.raids['Molten Core'][12][i].columns[1].members = {ti()}
+                ZRA_vars.raids['Molten Core'][12][i].columns[2].members = {hi()}
+            end
         end,
         Lucifron = function()
             local hi = ZRA.tank_heal_iter()
@@ -930,6 +1004,24 @@ ZRA.announcements = {
                 end
             end
             table.insert(lines, table.concat(banishes, ", "))
+            return lines
+        end,
+        Dog_Pack = function(rdata)
+            local lines = {}
+            table.insert(lines, string.upper(rdata.name) .. " assignments")
+            for i = 1, 5 do
+                local v = rdata[i]
+                local phrase = ""
+                if #v.columns[1].members > 0 then
+                    phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                end
+                local healnames = {}
+                for _, vv in ipairs(v.columns[2].members) do
+                    table.insert(healnames, ZRA_vars.roster[vv].name)
+                end
+                phrase = phrase .. ' healed by ' .. table.concat(healnames, ", ")
+                table.insert(lines, phrase)
+            end
             return lines
         end,
         Lucifron = function(rdata)
