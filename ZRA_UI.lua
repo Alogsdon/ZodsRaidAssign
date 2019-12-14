@@ -1,34 +1,27 @@
 
---local RL = AceLibrary("Roster-2.1")
+local addonName, ZRA = ...
 
-local ZodsRaidAssign = {
+ZRA.lastColumnId = 0
 
-}
-
-
-	--C_ChatInfo.SendAddonMessage("prefix", "message" [, "chatType", "target"])
-
-ZodsRaidAssign.lastColumnId = 0
-
-function ZodsRaidAssign.onUpdate()
+function ZRA.onUpdate()
 	if ZDragframe:IsVisible() then
-		local f = ZodsRaidAssign.getMouseFrame(ZodsRaidAssign.column_frames)
+		local f = ZRA.getMouseFrame(ZRA.column_frames)
 		if not f then f = {id = 0} end
-		if not (f.id == ZodsRaidAssign.lastColumnId) then
+		if not (f.id == ZRA.lastColumnId) then
 			--entered, left, or transitioned
-			if ZodsRaidAssign.lastColumnId ~= 0 then
-				ZodsRaidAssign.column_frames[ZodsRaidAssign.lastColumnId]:GetScript("OnLeave")()
+			if ZRA.lastColumnId ~= 0 then
+				ZRA.column_frames[ZRA.lastColumnId]:GetScript("OnLeave")()
 			end
 			if f.id ~= 0 then
 				f:GetScript("OnEnter")()
 			end
-			ZodsRaidAssign.lastColumnId = f.id
+			ZRA.lastColumnId = f.id
 		end
 		if f.id ~= 0 then
 			local _ , mousey = GetCursorPosition()
 			mousey = mousey / UIParent:GetEffectiveScale()
 			local y = f:GetTop()
-			f.hover_ind = floor((y - mousey)/ZodsRaidAssign.PLAYER_SIZE) + 1
+			f.hover_ind = floor((y - mousey)/ZRA.PLAYER_SIZE) + 1
 			f:hoverAdjust()
 		end
 	end
@@ -36,46 +29,46 @@ function ZodsRaidAssign.onUpdate()
 	
 end
 
-function ZodsRaidAssignPublic.updateUI()
+function ZRA.updateUI()
 	if not ZRALayoutFrame:IsVisible() then return end
 
-	local raid = ZodsRaidAssign.current_tab or 'Roles'
-	ZodsRaidAssign.raid_data = nil
+	local raid = ZRA.current_tab or 'Roles'
+	ZRA.raid_data = nil
 	if raid == "Roles" then
-		ZodsRaidAssign.raid_data = ZRA_vars.roles
+		ZRA.raid_data = ZRA_vars.roles
 		ZRALayoutFrame.rosterParent:Show()
-		ZodsRaidAssign.dropdown:Hide()
+		ZRA.dropdown:Hide()
 	elseif raid == "Log" then
 		ZRALayoutFrame.rosterParent:Hide()
-		ZodsRaidAssign.raid_data = {}
-		ZodsRaidAssign.dropdown:Hide()
+		ZRA.raid_data = {}
+		ZRA.dropdown:Hide()
 	else
 		ZRALayoutFrame.rosterParent:Show()
-		if (tablelen(ZRA_vars.raids[ZodsRaidAssign.current_tab]) == 1) then
-			ZodsRaidAssign.dropdown:Hide()
+		if (ZRA.tablelen(ZRA_vars.raids[ZRA.current_tab]) == 1) then
+			ZRA.dropdown:Hide()
 		else
-			ZodsRaidAssign.dropdown:Show()
+			ZRA.dropdown:Show()
 		end
-		local boss_name = UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)
+		local boss_name = UIDropDownMenu_GetSelectedName(ZRA.dropdown)
 		local ind = 1
-		for i,v in ipairs(ZRA_vars.raids[ZodsRaidAssign.current_tab]) do
+		for i,v in ipairs(ZRA_vars.raids[ZRA.current_tab]) do
 			if v.name == boss_name then
 				ind = i
 				break
 			end
 		end
-		ZodsRaidAssign.raid_data = ZRA_vars.raids[raid][ind]
+		ZRA.raid_data = ZRA_vars.raids[raid][ind]
 	end
 
-	--print("update ui " .. (ZodsRaidAssign.current_tab or "no tab set"))
+	--print("update ui " .. (ZRA.current_tab or "no tab set"))
 
 	ZRAGenAssBtn:Show()
 	ZRAdrop_mems_btn:Show()
 	ZRAload_mems_btn:Show()
 	ZRAscrollbox:Hide()
-	if ZodsRaidAssign.current_tab == "Roles" then
+	if ZRA.current_tab == "Roles" then
 		ZRApost_ass_btn:Hide()
-	elseif ZodsRaidAssign.current_tab == "Log" then
+	elseif ZRA.current_tab == "Log" then
 		ZRApost_ass_btn:Hide()
 		ZRAGenAssBtn:Hide()
 		ZRAdrop_mems_btn:Hide()
@@ -85,26 +78,26 @@ function ZodsRaidAssignPublic.updateUI()
 		ZRApost_ass_btn:Show()
 	end
 			
-	ZodsRaidAssign.freeFrames(ZodsRaidAssign.group_frames)
+	ZRA.freeFrames(ZRA.group_frames)
 	ZRALayoutFrame.usedSpaceX = 0
-	for groupInd, assign_group in ipairs(ZodsRaidAssign.raid_data) do
-		local f = ZodsRaidAssign.GetAGroupFrame()
+	for groupInd, assign_group in ipairs(ZRA.raid_data) do
+		local f = ZRA.GetAGroupFrame()
 		f.text:SetText(assign_group.title)
 		f:SetPoint("TOPLEFT", ZRALayoutFrame, "TOPLEFT", 30 + ZRALayoutFrame.usedSpaceX, -60)
 		f.width = 60 * #assign_group.columns
-		f.height = ZodsRaidAssign.GROUP_HEIGHT
+		f.height = ZRA.GROUP_HEIGHT
 		f:SetWidth(f.width)
 		f:SetHeight(f.height)
 		f:Show()
 		f.busy = true
 		ZRALayoutFrame.usedSpaceX = ZRALayoutFrame.usedSpaceX + f.width
 		
-		ZodsRaidAssign.freeFrames(f.columns)
+		ZRA.freeFrames(f.columns)
 		f.usedSpaceX = 0
 		f.columns = {}
 		
 		for colInd,v in ipairs(assign_group.columns) do
-			local c = ZodsRaidAssign.GetAColumnFrame()
+			local c = ZRA.GetAColumnFrame()
 			c.width = 60
 			c.text:SetWidth(c.width)
 			c.text:SetText(v.header)
@@ -139,7 +132,7 @@ function ZodsRaidAssignPublic.updateUI()
 		end
 	end
 	local s = ''
-	for i, v in ipairs(ZodsRaidAssignPublic.assignUpdateHistory) do
+	for i, v in ipairs(ZRA.assignUpdateHistory) do
 		if v.update_type == 'boss' then
 			s = '\n' .. 'from: ' .. v.sender .. " r:" .. v.raid .. " b:" .. v.boss .. " ".. v.diff .. s
 		elseif v.update_type == 'roster' then
@@ -151,21 +144,7 @@ function ZodsRaidAssignPublic.updateUI()
 		end
 	end
 	s = "Event Log (most recent at top)" .. s
-	ZodsRaidAssign.eventLogFontString:SetText(s)
-end
-
-function ZodsRaidAssign.onEvent(frame, event, arg1, arg2, arg3, ...)
-
-	if (event == "ADDON_LOADED" and arg1 == "ZodsRaidAssign") then
-		ZodsRaidAssign.onLoad()
-		
-	elseif event == "CHAT_MSG_ADDON" then
-		if arg1 == "ZRA" and (arg3 == "PARTY" or arg3 == "WHISPER" or arg3 == "RAID")  then -- and arg4 ~= UnitName("player")
-		end
-	else
-		--unhandled onEvent
-		--DEFAULT_CHAT_FRAME:AddMessage(event..(arg1 or ""))
-	end
+	ZRA.eventLogFontString:SetText(s)
 end
 
 
@@ -180,14 +159,14 @@ local backdrop2 = {
 	edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 16,
 	insets = {left = 4, right = 4, top = 4, bottom = 4},
 }
-ZodsRaidAssign.PLAYER_SIZE = 38
-ZodsRaidAssign.GROUP_HEIGHT = 300
+ZRA.PLAYER_SIZE = 38
+ZRA.GROUP_HEIGHT = 300
 
-function ZodsRaidAssign.onLoad()
-	ZodsRaidAssign.group_frames = {}
-	ZodsRaidAssign.column_frames = {}
-	ZodsRaidAssign.player_frames = {}
-	ZodsRaidAssign.asignee_frames = {}
+function ZRA.onLoadUI()
+	ZRA.group_frames = {}
+	ZRA.column_frames = {}
+	ZRA.player_frames = {}
+	ZRA.asignee_frames = {}
 	
 	local f = CreateFrame("Frame", "ZRALayoutFrame", UIParent)
 	f:EnableMouse(true)
@@ -218,7 +197,7 @@ function ZodsRaidAssign.onLoad()
 	tinsert(UISpecialFrames, f:GetName())
 
 	local closebutton = CreateFrame("Button",nil,f,"UIPanelCloseButton")
-	closebutton:SetScript("OnClick", ZodsRaidAssign.closeOnClick)
+	closebutton:SetScript("OnClick", ZRA.closeOnClick)
 	closebutton:SetPoint("TOPRIGHT",f,"TOPRIGHT",-2,-2)
 	f.closebutton = closebutton
 	closebutton.obj = f
@@ -234,7 +213,7 @@ function ZodsRaidAssign.onLoad()
 	b:Show()
 	b:SetText(tabkey)
 	b.id = 1
-	b:SetScript("OnClick", ZodsRaidAssign.tabClicked(tabkey, 1))
+	b:SetScript("OnClick", ZRA.tabClicked(tabkey, 1))
 	PanelTemplates_TabResize(b, 10, 100, 300)
 
 	local tabind = 2
@@ -245,7 +224,7 @@ function ZodsRaidAssign.onLoad()
 		b:Show()
 		b:SetText(raid)
 		b.id = tabind
-		b:SetScript("OnClick", ZodsRaidAssign.tabClicked(raid, tabind))
+		b:SetScript("OnClick", ZRA.tabClicked(raid, tabind))
 		PanelTemplates_TabResize(b, 10, 100, 300)
 		tabind = tabind + 1
 	end
@@ -255,15 +234,15 @@ function ZodsRaidAssign.onLoad()
 	b:Show()
 	b:SetText("Log")
 	b.id = tabind
-	b:SetScript("OnClick", ZodsRaidAssign.tabClicked("Log", tabind))
+	b:SetScript("OnClick", ZRA.tabClicked("Log", tabind))
 	PanelTemplates_TabResize(b, 10, 100, 300)
 
 	PanelTemplates_SetNumTabs(ZRALayoutFrame, tabind)
 	PanelTemplates_SetTab(ZRALayoutFrame, 1)
 
-	ZodsRaidAssign.dropdown = CreateFrame("Frame", "ZRAFightDropDown", ZRALayoutFrame, "UIDropDownMenuTemplate")
-	ZodsRaidAssign.dropdown:SetPoint("TOPRIGHT", ZRALayoutFrame, "TOPRIGHT", -150, -20)
-	UIDropDownMenu_Initialize(ZodsRaidAssign.dropdown, ZodsRaidAssign.clickDropDown)
+	ZRA.dropdown = CreateFrame("Frame", "ZRAFightDropDown", ZRALayoutFrame, "UIDropDownMenuTemplate")
+	ZRA.dropdown:SetPoint("TOPRIGHT", ZRALayoutFrame, "TOPRIGHT", -150, -20)
+	UIDropDownMenu_Initialize(ZRA.dropdown, ZRA.clickDropDown)
 
 	--dragframe
 	local dragframe = CreateFrame("Button", "ZDragframe", ZRALayoutFrame)
@@ -279,7 +258,7 @@ function ZodsRaidAssign.onLoad()
 	dragframe:Hide()
 
 
-	ZodsRaidAssignPublic.updateRoster()
+	ZRA.updateRoster()
 	
 
 	--Generate Assignments
@@ -289,17 +268,17 @@ function ZodsRaidAssign.onLoad()
 	gen_ass_btn:SetWidth(120)
 	gen_ass_btn:SetHeight(30)
 	gen_ass_btn:SetScript("OnClick", function()
-		if ZodsRaidAssign.current_tab == "Roles" then
-			--print('generating assignments for ' .. ZodsRaidAssign.current_tab)
-			ZodsRaidAssignPublic.funcs.Roles()
-			ZodsRaidAssignPublic.sendBossAssigns("Roles")
+		if ZRA.current_tab == "Roles" then
+			--print('generating assignments for ' .. ZRA.current_tab)
+			ZRA.funcs.Roles()
+			ZRA.sendBossAssigns("Roles")
 		else
-			--print('generating assignments for ' .. ZodsRaidAssign.current_tab .. ' ' .. ZodsRaidAssign.getDropdownName())
-			ZodsRaidAssignPublic.funcs[ZodsRaidAssign.current_tab][ZodsRaidAssign.getDropdownName()]()
-			ZodsRaidAssignPublic.sendBossAssigns(ZodsRaidAssign.current_tab, ZodsRaidAssign.getDropdownInd())
+			--print('generating assignments for ' .. ZRA.current_tab .. ' ' .. ZRA.getDropdownName())
+			ZRA.funcs[ZRA.current_tab][ZRA.getDropdownName()]()
+			ZRA.sendBossAssigns(ZRA.current_tab, ZRA.getDropdownInd())
 		end
-		table.insert(ZodsRaidAssignPublic.assignUpdateHistory, {update_type = 'self', raid = ZodsRaidAssign.current_tab, boss =  ZodsRaidAssign.getDropdownName() or "_", diff = 'I auto filled'})
-		ZodsRaidAssignPublic.updateUI()
+		table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  ZRA.getDropdownName() or "_", diff = 'I auto filled'})
+		ZRA.updateUI()
 	end)
 	gen_ass_btn:Show()
 
@@ -310,8 +289,8 @@ function ZodsRaidAssign.onLoad()
 	ZRApost_ass_btn:SetWidth(120)
 	ZRApost_ass_btn:SetHeight(30)
 	ZRApost_ass_btn:SetScript("OnClick", function()
-		--print('posting ' .. UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown) .. ' assignments to raid')
-		local phrases = ZodsRaidAssignPublic.announcements[ZodsRaidAssign.current_tab][UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)](ZodsRaidAssign.raid_data)
+		--print('posting ' .. UIDropDownMenu_GetSelectedName(ZRA.dropdown) .. ' assignments to raid')
+		local phrases = ZRA.announcements[ZRA.current_tab][UIDropDownMenu_GetSelectedName(ZRA.dropdown)](ZRA.raid_data)
 		if UnitInRaid("player") and (UnitIsGroupAssistant("player") or UnitIsGroupLeader("player")) then
 			for _, line in ipairs(phrases or {}) do
 				SendChatMessage(line ,"RAID_WARNING" )
@@ -336,9 +315,9 @@ function ZodsRaidAssign.onLoad()
 	load_mems_btn:SetWidth(67)
 	load_mems_btn:SetHeight(30)
 	load_mems_btn:SetScript("OnClick", function()
-		ZodsRaidAssignPublic.loadMembers()
-		ZodsRaidAssignPublic.updateRoster()
-		ZodsRaidAssignPublic.updateUI()
+		ZRA.loadMembers()
+		ZRA.updateRoster()
+		ZRA.updateUI()
 	end)
 	load_mems_btn:Show()
 
@@ -349,9 +328,9 @@ function ZodsRaidAssign.onLoad()
 	drop_mems_btn:SetWidth(67)
 	drop_mems_btn:SetHeight(30)
 	drop_mems_btn:SetScript("OnClick", function()
-		ZodsRaidAssignPublic.dropMembers()
-		ZodsRaidAssignPublic.updateRoster()
-		ZodsRaidAssignPublic.updateUI()
+		ZRA.dropMembers()
+		ZRA.updateRoster()
+		ZRA.updateUI()
 	end)
 	drop_mems_btn:Show()
 
@@ -381,7 +360,7 @@ function ZodsRaidAssign.onLoad()
 	eventsLogString:SetPoint("TOPRIGHT") -- Vert scroll only
 	eventsLogString:SetFont(STANDARD_TEXT_FONT, 12)
 	eventsLogString:SetText('events log')
-	ZodsRaidAssign.eventLogFontString = eventsLogString
+	ZRA.eventLogFontString = eventsLogString
 
 	scrollbox.scroll:SetAllPoints(scrollbox)
 	scrollbox.scroll:SetPoint("TOPLEFT", 0, -20)
@@ -389,50 +368,50 @@ function ZodsRaidAssign.onLoad()
 	scrollbox.content:SetSize(scrollbox.scroll:GetWidth(),  scrollbox.scroll:GetHeight())
 	scrollbox:Hide()
 
-	ZodsRaidAssign.showRoles()
+	ZRA.showRoles()
 	f:Hide()
 end
 
-function ZodsRaidAssignPublic.updateRoster()
-	ZodsRaidAssign.freeFrames(ZodsRaidAssign.player_frames)
-	ZodsRaidAssignPublic.updateRaidNums()
+function ZRA.updateRoster()
+	ZRA.freeFrames(ZRA.player_frames)
+	ZRA.updateRaidNums()
 	
 	local temp = {}
-	for r in ZodsRaidAssignPublic.raid_iter() do
+	for r in ZRA.raid_iter() do
 		table.insert(temp, r)
 	end
 	table.sort(temp, function(a, b) return(a.class < b.class) end)
 	for i, r in ipairs(temp) do
-		ZodsRaidAssign.setAPlayerFrame(r)
+		ZRA.setAPlayerFrame(r)
 	end
 end
 
-function ZodsRaidAssign.clickDropDown()
-	if ZRA_vars.raids[ZodsRaidAssign.current_tab] then
-		for i, v in ipairs(ZRA_vars.raids[ZodsRaidAssign.current_tab]) do
+function ZRA.clickDropDown()
+	if ZRA_vars.raids[ZRA.current_tab] then
+		for i, v in ipairs(ZRA_vars.raids[ZRA.current_tab]) do
 			local info = UIDropDownMenu_CreateInfo()
 			info.text = v.name
 			info.func = function (arg)
 				--print(arg.value)
 				UIDropDownMenu_SetSelectedName(ZRAFightDropDown, arg.value)
 				UIDropDownMenu_SetText(ZRAFightDropDown, arg.value)
-				if ZodsRaidAssignPublic.assignmentsAreBlank(ZodsRaidAssign.current_tab or "Roles", ZodsRaidAssign.getDropdownInd()) then
+				if ZRA.assignmentsAreBlank(ZRA.current_tab or "Roles", ZRA.getDropdownInd()) then
 					ZRAGenAssBtn:GetScript("OnClick")()
 				end
-				ZodsRaidAssign.showBoss(ZodsRaidAssign.current_tab, ZodsRaidAssign.getDropdownInd())
+				ZRA.showBoss(ZRA.current_tab, ZRA.getDropdownInd())
 			end
 			UIDropDownMenu_AddButton(info)
 		end
 	end
 end
 
-function ZodsRaidAssign.getDropdownInd()
+function ZRA.getDropdownInd()
 	local ind = 1
-	if ZodsRaidAssign.current_tab == "Roles" or ZodsRaidAssign.current_tab == "Log" then
+	if ZRA.current_tab == "Roles" or ZRA.current_tab == "Log" then
 		return -1
 	end
-	for i,v in ipairs(ZRA_vars.raids[ZodsRaidAssign.current_tab]) do
-		if v.name == UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown) then
+	for i,v in ipairs(ZRA_vars.raids[ZRA.current_tab]) do
+		if v.name == UIDropDownMenu_GetSelectedName(ZRA.dropdown) then
 			ind = i
 			break
 		end
@@ -440,63 +419,63 @@ function ZodsRaidAssign.getDropdownInd()
 	return ind
 end
 
-function ZodsRaidAssign.getDropdownName()
-	if ZodsRaidAssign.current_tab == "Roles" or ZodsRaidAssign.current_tab == "Log" then return end
-	return ZRA_vars.raids[ZodsRaidAssign.current_tab][ZodsRaidAssign.getDropdownInd()].name
+function ZRA.getDropdownName()
+	if ZRA.current_tab == "Roles" or ZRA.current_tab == "Log" then return end
+	return ZRA_vars.raids[ZRA.current_tab][ZRA.getDropdownInd()].name
 end
 
-function ZodsRaidAssign.tabClicked(key, tabindex)
+function ZRA.tabClicked(key, tabindex)
 	return function()
 		PanelTemplates_SetTab(ZRALayoutFrame, tabindex)
-		ZodsRaidAssign.current_tab = key
-		if ZodsRaidAssignPublic.assignmentsAreBlank(ZodsRaidAssign.current_tab or "Roles", ZodsRaidAssign.getDropdownInd()) then
+		ZRA.current_tab = key
+		if ZRA.assignmentsAreBlank(ZRA.current_tab or "Roles", ZRA.getDropdownInd()) then
 			ZRAGenAssBtn:GetScript("OnClick")()
 		end
 
 		if key == "Roles" then
-			ZodsRaidAssign.showRoles()
+			ZRA.showRoles()
 		elseif key == "Log" then
-			ZodsRaidAssign.showLog()
+			ZRA.showLog()
 		else
-			local boss_name = UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown)
+			local boss_name = UIDropDownMenu_GetSelectedName(ZRA.dropdown)
 			local ind = 1
-			for i,v in ipairs(ZRA_vars.raids[ZodsRaidAssign.current_tab]) do
+			for i,v in ipairs(ZRA_vars.raids[ZRA.current_tab]) do
 				if v.name == boss_name then
 					ind = i
 					break
 				end
 			end
-			UIDropDownMenu_SetSelectedName(ZRAFightDropDown, ZRA_vars.raids[ZodsRaidAssign.current_tab][ind].name)
-			UIDropDownMenu_SetText(ZRAFightDropDown, ZRA_vars.raids[ZodsRaidAssign.current_tab][ind].name)
-			ZodsRaidAssign.showBoss(key)
+			UIDropDownMenu_SetSelectedName(ZRAFightDropDown, ZRA_vars.raids[ZRA.current_tab][ind].name)
+			UIDropDownMenu_SetText(ZRAFightDropDown, ZRA_vars.raids[ZRA.current_tab][ind].name)
+			ZRA.showBoss(key)
 		end
 	end
 end
 
-function ZodsRaidAssign.showRoles()
-	ZodsRaidAssign.showBoss("Roles")
+function ZRA.showRoles()
+	ZRA.showBoss("Roles")
 end
 
-function ZodsRaidAssign.showLog()
+function ZRA.showLog()
 	
-	ZodsRaidAssign.showBoss("Log")
+	ZRA.showBoss("Log")
 end
 
-function ZodsRaidAssign.showBoss()
+function ZRA.showBoss()
 	
 
-	ZodsRaidAssignPublic.updateUI()
+	ZRA.updateUI()
 end
 
-function ZodsRaidAssign.freeFrames(frames)
+function ZRA.freeFrames(frames)
 	for i, v in pairs(frames) do 
 		v.busy = false
 		if v.members then
-			ZodsRaidAssign.freeFrames(v.members)
+			ZRA.freeFrames(v.members)
 			v.members = {}
 		end
 		if v.columns then
-			ZodsRaidAssign.freeFrames(v.columns)
+			ZRA.freeFrames(v.columns)
 			v.columns = {}
 			v.usedSpaceX = 0
 		end
@@ -504,29 +483,29 @@ function ZodsRaidAssign.freeFrames(frames)
 	end
 end
 
-function ZodsRaidAssign.catchAsignee(catcher, player)
-	local code = ZodsRaidAssignPublic.getCodeFromName(player.name)
-	local setZRA = ZodsRaidAssignPublic.setRaidAssignment
+function ZRA.catchAsignee(catcher, player)
+	local code = ZRA.getCodeFromName(player.name)
+	local setZRA = ZRA.setRaidAssignment
 	for i,v in pairs(catcher.dataRef.members) do
 		--dont allowe dupplicated
 		if code == v then return end
 	end
 	catcher.hover_ind = min(catcher.hover_ind, #catcher.members + 1)
-	local updatedMembers = shallowcopy(catcher.dataRef.members)
+	local updatedMembers = ZRA.shallowcopy(catcher.dataRef.members)
 	table.insert(updatedMembers, catcher.hover_ind , code)
-	setZRA(ZodsRaidAssign.current_tab, ZodsRaidAssign.getDropdownInd(), catcher.groupind, catcher.column , updatedMembers, 'self')
-	ZodsRaidAssign.showAsignee(catcher, player, catcher.hover_ind )
-	table.insert(ZodsRaidAssignPublic.assignUpdateHistory, {update_type = 'self', raid = ZodsRaidAssign.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown) or "_", diff = 'assigned ' .. player.name})
-	ZodsRaidAssignPublic.sendBossAssigns(ZodsRaidAssign.current_tab, ZodsRaidAssign.getDropdownInd())
+	setZRA(ZRA.current_tab, ZRA.getDropdownInd(), catcher.groupind, catcher.column , updatedMembers, 'self')
+	ZRA.showAsignee(catcher, player, catcher.hover_ind )
+	table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'assigned ' .. player.name})
+	ZRA.sendBossAssigns(ZRA.current_tab, ZRA.getDropdownInd())
 	return f
 end
 
-function ZodsRaidAssign.showAsignee(catcher, player, where)
-	local f = ZodsRaidAssign.getAnAsigneeFrame()
+function ZRA.showAsignee(catcher, player, where)
+	local f = ZRA.getAnAsigneeFrame()
 	f:SetParent(catcher)
 	f:SetScript("OnMouseUp", function(self,btn)
 		ZDragframe:StopMovingOrSizing()
-		local inframe = ZodsRaidAssign.getMouseFrame(ZodsRaidAssign.column_frames)
+		local inframe = ZRA.getMouseFrame(ZRA.column_frames)
 		if inframe then	
 			inframe:catchGuy(player)
 		end
@@ -535,16 +514,16 @@ function ZodsRaidAssign.showAsignee(catcher, player, where)
 	end)
 	f:SetScript("OnMouseDown", function(self,btn)
 		self:GetParent():dropGuy(player)
-		ZodsRaidAssign.pickUpPlayer(f, player)
+		ZRA.pickUpPlayer(f, player)
 	end)
 	f:SetScript('OnEnter', function()
-		ZodsRaidAssign.mouseOverEnter(player)
+		ZRA.mouseOverEnter(player)
 	end)
 	f:SetScript('OnLeave', function()
-		ZodsRaidAssign.mouseOverExit(player)
+		ZRA.mouseOverExit(player)
 	end)
 	f:SetPoint("CENTER", catcher, "TOP", 0 , -20 );
-	local color = ZodsRaidAssign.playerColor(player)
+	local color = ZRA.playerColor(player)
 	f:SetBackdropColor(color.r, color.g, color.b,1)
 	f.Text:SetText(string.sub(player.name,1,4))
 	f.busy = true
@@ -554,10 +533,10 @@ function ZodsRaidAssign.showAsignee(catcher, player, where)
 	f:Show()
 end
 
-function ZodsRaidAssign.playerColor(player)
-	local rn = ZRA_vars.roster[ZodsRaidAssignPublic.getCodeFromName(player.name)].raidNum
+function ZRA.playerColor(player)
+	local rn = ZRA_vars.roster[ZRA.getCodeFromName(player.name)].raidNum
 	local c = RAID_CLASS_COLORS[player.class]
-	if ZodsRaidAssignPublic.dontgray or player.name == UnitName("player") then return c end
+	if ZRA.dontgray or player.name == UnitName("player") then return c end
 	if rn == 0 then
 		return {r=0.2*c.r, g=0.2*c.g, b=0.2*c.b}
 	else
@@ -570,7 +549,7 @@ function ZodsRaidAssign.playerColor(player)
 	end
 end
 
-function ZodsRaidAssign.dropAsignee(columnframe, player)
+function ZRA.dropAsignee(columnframe, player)
 	--modify data
 	for i,v in ipairs(columnframe.dataRef.members) do
 		if ZRA_vars.roster[v].name == player.name then
@@ -584,29 +563,29 @@ function ZodsRaidAssign.dropAsignee(columnframe, player)
 			table.remove(columnframe.members, i)
 		end
 	end
-	table.insert(ZodsRaidAssignPublic.assignUpdateHistory, {update_type = 'self', raid = ZodsRaidAssign.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZodsRaidAssign.dropdown) or "_", diff = 'removed ' .. player.name})
-	ZodsRaidAssignPublic.sendBossAssigns(ZodsRaidAssign.current_tab, ZodsRaidAssign.getDropdownInd())
+	table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'removed ' .. player.name})
+	ZRA.sendBossAssigns(ZRA.current_tab, ZRA.getDropdownInd())
 end
 
-function ZodsRaidAssign.mouseOverEnter(player)
+function ZRA.mouseOverEnter(player)
 	GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
 	GameTooltip:SetUnit("raid" .. player.raidNum)
 	GameTooltip:Show()
 end
 
-function ZodsRaidAssign.mouseOverExit(player)
+function ZRA.mouseOverExit(player)
 	GameTooltip:FadeOut()
 end
 
-function ZodsRaidAssign.getAnAsigneeFrame()
-	local i  = ZodsRaidAssign.findNotBusyFrame(ZodsRaidAssign.asignee_frames)
+function ZRA.getAnAsigneeFrame()
+	local i  = ZRA.findNotBusyFrame(ZRA.asignee_frames)
 	if i then 
-		return ZodsRaidAssign.asignee_frames[i]
+		return ZRA.asignee_frames[i]
 	else
 		local f = CreateFrame("Button", nil, ZRALayoutFrame)
 		f = CreateFrame("Button", nil, ZRALayoutFrame);
-		f:SetWidth(ZodsRaidAssign.PLAYER_SIZE)
-		f:SetHeight(ZodsRaidAssign.PLAYER_SIZE)
+		f:SetWidth(ZRA.PLAYER_SIZE)
+		f:SetHeight(ZRA.PLAYER_SIZE)
 		f:SetBackdrop(backdrop2)
 		--f:EnableMouse()
 		f.texture = f:CreateTexture(nil, "BORDER")
@@ -616,28 +595,28 @@ function ZodsRaidAssign.getAnAsigneeFrame()
 		f.Text:SetJustifyV("CENTER")
 		f.Text:SetPoint("CENTER", f, "CENTER")
 		f.Text:SetTextColor(0,0,0)
-		f.id = #ZodsRaidAssign.asignee_frames + 1
-		f.startHide = ZodsRaidAssign.asigneeStartHide
-		f.finishHide = ZodsRaidAssign.asigneeFinishHide
-		table.insert(ZodsRaidAssign.asignee_frames, f)
+		f.id = #ZRA.asignee_frames + 1
+		f.startHide = ZRA.asigneeStartHide
+		f.finishHide = ZRA.asigneeFinishHide
+		table.insert(ZRA.asignee_frames, f)
 		return f
 	end
 end
 
-function ZodsRaidAssign.asigneeStartHide(self)
+function ZRA.asigneeStartHide(self)
 	self:SetAlpha(0)
 end
 
-function ZodsRaidAssign.asigneeFinishHide(self)
+function ZRA.asigneeFinishHide(self)
 	self:SetAlpha(1)
 	self.busy = false
 	self:Hide()
 end
 
-function ZodsRaidAssign.GetAColumnFrame()
-	local i  = ZodsRaidAssign.findNotBusyFrame(ZodsRaidAssign.column_frames)
+function ZRA.GetAColumnFrame()
+	local i  = ZRA.findNotBusyFrame(ZRA.column_frames)
 	if i then 
-		return ZodsRaidAssign.column_frames[i]
+		return ZRA.column_frames[i]
 	else
 		local f = CreateFrame("Frame", nil, ZRALayoutFrame)
 		f.text = f.text or f:CreateFontString(nil,"ARTWORK","GameFontNormal")
@@ -647,36 +626,36 @@ function ZodsRaidAssign.GetAColumnFrame()
 		f.texture = f:CreateTexture(nil, "BORDER")
 		f:EnableMouse()
 		f.text:SetTextColor(1,1,0,1)
-		f.id = #ZodsRaidAssign.column_frames + 1
+		f.id = #ZRA.column_frames + 1
 		f.members = {}
-		f.catchGuy = ZodsRaidAssign.catchAsignee
-		f.showGuy = ZodsRaidAssign.showAsignee
-		f.dropGuy = ZodsRaidAssign.dropAsignee
-		f.adjustMembers = ZodsRaidAssign.columnAdjustMembers
-		f.hoverAdjust = ZodsRaidAssign.columnAdjustHover
-		table.insert(ZodsRaidAssign.column_frames, f)
+		f.catchGuy = ZRA.catchAsignee
+		f.showGuy = ZRA.showAsignee
+		f.dropGuy = ZRA.dropAsignee
+		f.adjustMembers = ZRA.columnAdjustMembers
+		f.hoverAdjust = ZRA.columnAdjustHover
+		table.insert(ZRA.column_frames, f)
 		return f
 	end
 end
 
-function ZodsRaidAssign.columnAdjustMembers(self)
+function ZRA.columnAdjustMembers(self)
 	for i,v in ipairs(self.members) do
-		v:SetPoint("CENTER", self, "TOP", 0 , -20 - ZodsRaidAssign.PLAYER_SIZE*(i -1));
+		v:SetPoint("CENTER", self, "TOP", 0 , -20 - ZRA.PLAYER_SIZE*(i -1));
 	end
 end
 
-function ZodsRaidAssign.columnAdjustHover(self)
+function ZRA.columnAdjustHover(self)
 	--hover_ind is set
 	for i,v in ipairs(self.members) do
 		local adjustment = self.hover_ind <= i and 1 or 0
-		v:SetPoint("CENTER", self, "TOP", 0 , -20 - ZodsRaidAssign.PLAYER_SIZE*(i -1 + adjustment))
+		v:SetPoint("CENTER", self, "TOP", 0 , -20 - ZRA.PLAYER_SIZE*(i -1 + adjustment))
 	end
 end
 
-function ZodsRaidAssign.GetAGroupFrame()
-	local i  = ZodsRaidAssign.findNotBusyFrame(ZodsRaidAssign.group_frames)
+function ZRA.GetAGroupFrame()
+	local i  = ZRA.findNotBusyFrame(ZRA.group_frames)
 	if i then 
-		return ZodsRaidAssign.group_frames[i]
+		return ZRA.group_frames[i]
 	else
 		local f = CreateFrame("Frame", nil, ZRALayoutFrame)
 		f:SetFrameStrata("MEDIUM")
@@ -694,16 +673,16 @@ function ZodsRaidAssign.GetAGroupFrame()
 		f.text:SetPoint("TOPLEFT", 0, -10)
 		f.text:SetTextColor(1,1,0,1)
 		f.columns = {}
-		table.insert(ZodsRaidAssign.group_frames, f)
+		table.insert(ZRA.group_frames, f)
 		return f
 	end
 end
 
-function ZodsRaidAssign.getMouseFrame(frames)
+function ZRA.getMouseFrame(frames)
 	local mousex, mousey = GetCursorPosition()
 	mousex = mousex / UIParent:GetEffectiveScale()
 	mousey = mousey / UIParent:GetEffectiveScale()
-	for i, v in ipairs(ZodsRaidAssign.column_frames) do
+	for i, v in ipairs(ZRA.column_frames) do
 		if v:IsVisible() then
 			local x,y = v:GetCenter()
 			if abs(x - mousex) < v:GetWidth()/2 and abs(y - mousey) < v:GetHeight()/2 then
@@ -713,12 +692,12 @@ function ZodsRaidAssign.getMouseFrame(frames)
 	end
 end
 
-function ZodsRaidAssign.pickUpPlayer(copying_frame, player)
+function ZRA.pickUpPlayer(copying_frame, player)
 	ZDragframe:SetPoint("TOPLEFT", copying_frame, "TOPLEFT")
-	ZDragframe:SetPoint("BOTTOMRIGHT", copying_frame, "TOPLEFT", ZodsRaidAssign.PLAYER_SIZE, -ZodsRaidAssign.PLAYER_SIZE)
-	--ZDragframe:SetHeight(ZodsRaidAssign.PLAYER_SIZE)
-	--ZDragframe:SetWidth(ZodsRaidAssign.PLAYER_SIZE)
-	local color = ZodsRaidAssign.playerColor(player)
+	ZDragframe:SetPoint("BOTTOMRIGHT", copying_frame, "TOPLEFT", ZRA.PLAYER_SIZE, -ZRA.PLAYER_SIZE)
+	--ZDragframe:SetHeight(ZRA.PLAYER_SIZE)
+	--ZDragframe:SetWidth(ZRA.PLAYER_SIZE)
+	local color = ZRA.playerColor(player)
 	ZDragframe:SetBackdropColor(color.r, color.g, color.b,1)
 	ZDragframe.Text:SetText(string.sub(player.name,1,4))
 	ZDragframe:Show()
@@ -727,32 +706,32 @@ function ZodsRaidAssign.pickUpPlayer(copying_frame, player)
 end
 
 
-function ZodsRaidAssign.setAPlayerFrame(player)
-	local f = ZodsRaidAssign.getAPlayerFrame() 
+function ZRA.setAPlayerFrame(player)
+	local f = ZRA.getAPlayerFrame() 
 
 	f:SetScript("OnMouseUp", function(self,btn)
 		ZDragframe:StopMovingOrSizing()
-		local inframe = ZodsRaidAssign.getMouseFrame(ZodsRaidAssign.column_frames)
+		local inframe = ZRA.getMouseFrame(ZRA.column_frames)
 		if inframe then	
 			inframe:catchGuy(player)
 		end
 		ZDragframe:Hide()
 	end)
 	f:SetScript("OnMouseDown", function(self,btn)
-		ZodsRaidAssign.pickUpPlayer(f, player)
+		ZRA.pickUpPlayer(f, player)
 	end)
 	f:SetScript('OnEnter', function()
-		ZodsRaidAssign.mouseOverEnter(player)
+		ZRA.mouseOverEnter(player)
 	end)
 	f:SetScript('OnLeave', function()  
-		ZodsRaidAssign.mouseOverExit(player)
+		ZRA.mouseOverExit(player)
 	end)
-	local nframes = ZodsRaidAssign.countBusyFrames(ZodsRaidAssign.player_frames)
+	local nframes = ZRA.countBusyFrames(ZRA.player_frames)
 	local cols_per_row =  math.floor((ZRALayoutFrame:GetWidth() - 8 - 80 )/ (f:GetWidth() + 2))
 	local row = math.floor(nframes / cols_per_row)
-	local col = modulo(nframes , cols_per_row)
+	local col = ZRA.modulo(nframes , cols_per_row)
 	f:SetPoint("CENTER", ZRALayoutFrame, "BOTTOMLEFT", 80 + 30 + f:GetHeight()*col , 30 + f:GetWidth()*row);
-	local color = ZodsRaidAssign.playerColor(player)
+	local color = ZRA.playerColor(player)
 	f:SetBackdropColor(color.r, color.g, color.b,1)
 	f.Text:SetText(string.sub(player.name,1,4))
 	f.busy = true
@@ -760,14 +739,14 @@ function ZodsRaidAssign.setAPlayerFrame(player)
 end
 
 
-function ZodsRaidAssign.getAPlayerFrame()
-	local i = ZodsRaidAssign.findNotBusyFrame(ZodsRaidAssign.player_frames)
+function ZRA.getAPlayerFrame()
+	local i = ZRA.findNotBusyFrame(ZRA.player_frames)
 	if i then
-		return ZodsRaidAssign.player_frames[i]
+		return ZRA.player_frames[i]
 	else
 		f = CreateFrame("Button", nil, ZRALayoutFrame.rosterParent);
-		f:SetWidth(ZodsRaidAssign.PLAYER_SIZE)
-		f:SetHeight(ZodsRaidAssign.PLAYER_SIZE)
+		f:SetWidth(ZRA.PLAYER_SIZE)
+		f:SetHeight(ZRA.PLAYER_SIZE)
 		f:SetBackdrop(backdrop2)
 		f:EnableMouse()
 		f.Text = f:CreateFontString(nil, "ARTWORK")
@@ -777,14 +756,14 @@ function ZodsRaidAssign.getAPlayerFrame()
 		f.Text:SetPoint("CENTER", f, "CENTER")
 		f.Text:SetText("test")
 		f.Text:SetTextColor(0,0,0)
-		table.insert(ZodsRaidAssign.player_frames, f)
+		table.insert(ZRA.player_frames, f)
 		return f
 	end
 end
 
 
 
-function ZodsRaidAssign.findNotBusyFrame(frames)
+function ZRA.findNotBusyFrame(frames)
 	for i = 1, #frames do
 		if frames[i].busy == false then
 			return i
@@ -792,7 +771,7 @@ function ZodsRaidAssign.findNotBusyFrame(frames)
 	end
 end
 
-function ZodsRaidAssign.countBusyFrames(frames)
+function ZRA.countBusyFrames(frames)
 	local cnt = 0
 	for i = 1, #frames do
 		if frames[i].busy == true then
@@ -804,27 +783,27 @@ end
 
 
 
-ZodsRaidAssign.scriptframe = CreateFrame("Frame")
-ZodsRaidAssign.scriptframe:RegisterEvent("ADDON_LOADED")
-ZodsRaidAssign.scriptframe:SetScript("OnEvent", ZodsRaidAssign.onEvent)
-ZodsRaidAssign.scriptframe:SetScript("OnUpdate", ZodsRaidAssign.onUpdate)
+ZRA.scriptframe = CreateFrame("Frame")
+ZRA.scriptframe:RegisterEvent("ADDON_LOADED")
+ZRA.scriptframe:SetScript("OnEvent", ZRA.onEvent)
+ZRA.scriptframe:SetScript("OnUpdate", ZRA.onUpdate)
 
 
 
-function ZodsRaidAssignPublic.OpenMenu()
-	ZodsRaidAssignPublic.updateRaidNums()
-	if not ZodsRaidAssign.current_tab then 
-		ZodsRaidAssign.tabClicked("Roles")()
+function ZRA.OpenMenu()
+	ZRA.updateRaidNums()
+	if not ZRA.current_tab then 
+		ZRA.tabClicked("Roles")()
 	end
-	if ZodsRaidAssignPublic.assignmentsAreBlank(ZodsRaidAssign.current_tab or "Roles", ZodsRaidAssign.getDropdownInd()) then
+	if ZRA.assignmentsAreBlank(ZRA.current_tab or "Roles", ZRA.getDropdownInd()) then
 		ZRAGenAssBtn:GetScript("OnClick")()
 	end
 	ZRALayoutFrame:Show()
-	ZodsRaidAssignPublic.updateRoster()
-	ZodsRaidAssignPublic.updateUI()
+	ZRA.updateRoster()
+	ZRA.updateUI()
 end
 
-function ZodsRaidAssign.closeOnClick(self)
+function ZRA.closeOnClick(self)
 	self.obj:Hide()
 end
 

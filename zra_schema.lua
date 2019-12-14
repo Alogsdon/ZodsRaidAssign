@@ -1,8 +1,8 @@
 
-ZodsRaidAssignPublic = {}
+local addonName, ZRA = ...
 
 --ZRA_vars.roles 
-ZodsRaidAssignPublic.roleschema = {
+ZRA.roleschema = {
     {
         title = "Tanks",
         columns = {
@@ -33,7 +33,7 @@ ZodsRaidAssignPublic.roleschema = {
     },
 }
 
-ZodsRaidAssignPublic.raidschema = {
+ZRA.raidschema = {
     ['Onyxias Lair'] = {
         {
             name = 'Onyxia',
@@ -662,11 +662,11 @@ ZodsRaidAssignPublic.raidschema = {
 
 --functionsz
 
-ZodsRaidAssignPublic.funcs = {
+ZRA.funcs = {
     ['Molten Core'] = {
         Trash = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
             local locks = {}
             for k,v in pairs(ZRA_vars.roster) do
                 if v.class == "WARLOCK" then
@@ -685,8 +685,8 @@ ZodsRaidAssignPublic.funcs = {
             ZRA_vars.raids['Molten Core'][1][5].columns[1].members = {ti(), ti()}
         end,
         Lucifron = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
             local assigned_heals = {}
             for i = 1, 3 do
                 ZRA_vars.raids['Molten Core'][2][i].columns[1].members = {ti()}
@@ -718,8 +718,8 @@ ZodsRaidAssignPublic.funcs = {
             ZRA_vars.raids['Molten Core'][2][5].columns[2].members = curse
         end,
         Magmadar = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
 
             ZRA_vars.raids['Molten Core'][3][1].columns[1].members = {ti()}
             ZRA_vars.raids['Molten Core'][3][1].columns[2].members = {hi(), hi(), hi()}
@@ -727,8 +727,8 @@ ZodsRaidAssignPublic.funcs = {
             ZRA_vars.raids['Molten Core'][3][2].columns[1].members = {ti(), ti()}
         end,
         Gehennas = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
             local curse = {}
             for k,v in pairs(ZRA_vars.roster) do
                 if v.class == "MAGE" then
@@ -749,8 +749,8 @@ ZodsRaidAssignPublic.funcs = {
         end,
         Garr = function() 
             local locks = {}
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
             for k,v in pairs(ZRA_vars.roster) do
                 if v.class == "WARLOCK" then
                     table.insert(locks, k)
@@ -765,8 +765,8 @@ ZodsRaidAssignPublic.funcs = {
             end
         end,
         Shazzrah = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
             ZRA_vars.raids['Molten Core'][6][1].columns[1].members = {ti()}
             ZRA_vars.raids['Molten Core'][6][1].columns[2].members = {hi(), hi(), hi()}
             ZRA_vars.raids['Molten Core'][6][1].columns[3].members = {}
@@ -775,8 +775,8 @@ ZodsRaidAssignPublic.funcs = {
             end
         end,
         Baron = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
             ZRA_vars.raids['Molten Core'][7][1].columns[1].members = {ti()}
             ZRA_vars.raids['Molten Core'][7][1].columns[2].members = {}
             local assigned_heals = {}
@@ -803,8 +803,8 @@ ZodsRaidAssignPublic.funcs = {
             ZRA_vars.raids['Molten Core'][7][3].columns[1].members = magic
         end,
         Golemagg = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
             ZRA_vars.raids['Molten Core'][8][1].columns[1].members = {ti()}
             ZRA_vars.raids['Molten Core'][8][1].columns[2].members = {hi(), hi()}
             for i = 2, 3 do
@@ -815,9 +815,9 @@ ZodsRaidAssignPublic.funcs = {
             ZRA_vars.raids['Molten Core'][8][4].columns[1].members = {ti()}
         end,
         Sulfuron = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
-            local ti2 = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
+            local ti2 = ZRA.tank_iter()
             local assigned_wars = {}
             local mages = {}
             local meleekicks = {}
@@ -851,8 +851,8 @@ ZodsRaidAssignPublic.funcs = {
             ZRA_vars.raids['Molten Core'][9][6].columns[1].members = remaining(ti)
         end,
         Majordomo = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
             local mages = {}
             for k,v in pairs(ZRA_vars.roster) do
                 if v.class == "MAGE" then
@@ -872,8 +872,8 @@ ZodsRaidAssignPublic.funcs = {
             ZRA_vars.raids['Molten Core'][10][10].columns[1].members = remaining(ti)
         end,
         Ragnaros = function()
-            local hi = ZodsRaidAssignPublic.tank_heal_iter()
-            local ti = ZodsRaidAssignPublic.tank_iter()
+            local hi = ZRA.tank_heal_iter()
+            local ti = ZRA.tank_iter()
             ZRA_vars.raids['Molten Core'][11][1].columns[3].members = {hi(), hi()}
             ZRA_vars.raids['Molten Core'][11][1].columns[1].members = {ti(), hi()}
             ZRA_vars.raids['Molten Core'][11][1].columns[2].members = {ti(), hi()}
@@ -902,7 +902,7 @@ ZodsRaidAssignPublic.funcs = {
     }
 }
 
-ZodsRaidAssignPublic.announcements = {
+ZRA.announcements = {
     ['Molten Core'] = {
         Trash = function(rdata)
             local lines = {}
@@ -911,7 +911,7 @@ ZodsRaidAssignPublic.announcements = {
                 local v = rdata[i]
                 local phrase = ""
                 if #v.columns[1].members > 0 then
-                    phrase = ZodsRaidAssignPublic.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                    phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
                 end
                 local healnames = {}
                 for _, vv in ipairs(v.columns[2].members) do
@@ -926,7 +926,7 @@ ZodsRaidAssignPublic.announcements = {
             for i = 3, 4 do
                 local v = rdata[i]
                 if #v.columns[1].members > 0 then
-                    table.insert(banishes,  ZRA_vars.roster[v.columns[1].members[1]].name .. ' banish ' .. ZodsRaidAssignPublic.shape(rdata[i].title))
+                    table.insert(banishes,  ZRA_vars.roster[v.columns[1].members[1]].name .. ' banish ' .. ZRA.shape(rdata[i].title))
                 end
             end
             table.insert(lines, table.concat(banishes, ", "))
@@ -939,7 +939,7 @@ ZodsRaidAssignPublic.announcements = {
                 local v = rdata[i]
                 local phrase = ""
                 if #v.columns[1].members > 0 then 
-                    phrase = ZodsRaidAssignPublic.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                    phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
                 end
                 phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
                 table.insert(lines, phrase)
@@ -955,7 +955,7 @@ ZodsRaidAssignPublic.announcements = {
             local v = rdata[1]
             local phrase = ""
             if #v.columns[1].members > 0 then
-                phrase = ZodsRaidAssignPublic.shape(rdata[1].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                phrase = ZRA.shape(rdata[1].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
             end
             phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(rdata[1].columns[2].members, ZRA_vars.roster, 'name'), ", ")
             table.insert(lines, phrase)
@@ -969,7 +969,7 @@ ZodsRaidAssignPublic.announcements = {
                 local v = rdata[i]
                 local phrase = ""
                 if #v.columns[1].members > 0 then 
-                    phrase = ZodsRaidAssignPublic.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                    phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
                 end
                 phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
                 table.insert(lines, phrase)
@@ -985,12 +985,12 @@ ZodsRaidAssignPublic.announcements = {
             for i,v in ipairs(rdata) do
                 local first_person = ZRA_vars.roster[v.columns[1].members[1]]
                 if first_person and first_person.class == "WARLOCK" then
-                    local phrase = first_person.name .. " banish " .. ZodsRaidAssignPublic.shape(v.title)
+                    local phrase = first_person.name .. " banish " .. ZRA.shape(v.title)
                     table.insert(banishes, phrase)
                 elseif first_person then
                     local temp = shallowcopy(v.columns[1].members)
                     local temp2 = {}
-                    local phrase = ZRA_vars.roster[table.remove(temp, 1)].name .. ' tanking ' .. ZodsRaidAssignPublic.shape(v.title)
+                    local phrase = ZRA_vars.roster[table.remove(temp, 1)].name .. ' tanking ' .. ZRA.shape(v.title)
                     for _ ,vv in ipairs(temp) do
                         table.insert(temp2, ZRA_vars.roster[vv].name)
                     end
@@ -1014,7 +1014,7 @@ ZodsRaidAssignPublic.announcements = {
             local v = rdata[1]
             local phrase = ""
             if #v.columns[1].members > 0 then 
-                phrase = ZodsRaidAssignPublic.shape(v.title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                phrase = ZRA.shape(v.title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
             end
             phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(v.columns[2].members, ZRA_vars.roster, 'name'), ", ")
             table.insert(lines, phrase)
@@ -1027,7 +1027,7 @@ ZodsRaidAssignPublic.announcements = {
             local v = rdata[1]
             local phrase = ""
             if #v.columns[1].members > 0 then 
-                phrase = ZodsRaidAssignPublic.shape(v.title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                phrase = ZRA.shape(v.title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
             end
             phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(v.columns[2].members, ZRA_vars.roster, 'name'), ", ")
             table.insert(lines, phrase)
@@ -1044,7 +1044,7 @@ ZodsRaidAssignPublic.announcements = {
                 local v = rdata[i]
                 local phrase = ""
                 if #v.columns[1].members > 0 then 
-                    phrase = ZodsRaidAssignPublic.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                    phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
                 end
                 phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
                 table.insert(lines, phrase)
@@ -1058,7 +1058,7 @@ ZodsRaidAssignPublic.announcements = {
             local v = rdata[1]
             local phrase = ""
             if #v.columns[1].members > 0 then 
-                phrase = ZodsRaidAssignPublic.shape(v.title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                phrase = ZRA.shape(v.title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
             end
             phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(v.columns[2].members, ZRA_vars.roster, 'name'), ", ")
             table.insert(lines, phrase)
@@ -1066,11 +1066,11 @@ ZodsRaidAssignPublic.announcements = {
                 local v = rdata[i]
                 local phrase = ""
                 if #v.columns[1].members > 1 then 
-                    phrase = ZodsRaidAssignPublic.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                    phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
                     phrase = phrase .. ' healed by ' .. ZRA_vars.roster[v.columns[1].members[2]].name
                 end
                 table.insert(lines, phrase)
-                phrase = ZodsRaidAssignPublic.shape(rdata[i].title) .. ' interupts: ' .. table.concat(codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
+                phrase = ZRA.shape(rdata[i].title) .. ' interupts: ' .. table.concat(codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
                 table.insert(lines, phrase)
             end
             if #rdata[6].columns[1].members > 0 then
@@ -1085,7 +1085,7 @@ ZodsRaidAssignPublic.announcements = {
                 local v = rdata[i]
                 local phrase = ""
                 if #v.columns[1].members > 1 then 
-                    phrase = ZodsRaidAssignPublic.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
+                    phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
                     phrase = phrase .. ' healed by ' .. ZRA_vars.roster[v.columns[1].members[2]].name
                     if v.columns[1].members[3] then phrase = phrase .. ', ' .. ZRA_vars.roster[v.columns[1].members[3]].name end
                 end
@@ -1095,7 +1095,7 @@ ZodsRaidAssignPublic.announcements = {
             for i = 6, 9 do
                 local v = rdata[i]
                 if #v.columns[1].members > 0 then 
-                    table.insert(sheeps, ZRA_vars.roster[v.columns[1].members[1]].name .. ' sheeping ' .. ZodsRaidAssignPublic.shape(rdata[i].title))
+                    table.insert(sheeps, ZRA_vars.roster[v.columns[1].members[1]].name .. ' sheeping ' .. ZRA.shape(rdata[i].title))
                 end
             end
             table.insert(lines, "SHEEPS")
@@ -1140,7 +1140,7 @@ ZodsRaidAssignPublic.announcements = {
 }
 
 
-ZodsRaidAssignPublic.testroster1 = {
+ZRA.testroster1 = {
     ["a"] = {
         ["class"] = "WARRIOR",
         ["name"] = "Scottyflip",
@@ -1338,7 +1338,7 @@ ZodsRaidAssignPublic.testroster1 = {
     },
 }
 
-ZodsRaidAssignPublic.testroster2 = {
+ZRA.testroster2 = {
     ["a"] = {
         ["class"] = "WARRIOR",
         ["name"] = "Scottyflip",
