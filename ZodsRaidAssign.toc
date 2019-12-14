@@ -2,7 +2,7 @@
 ## Interface: 11303
 ## Notes: raid assignment tool
 ## Author: Zodicus
-## Version: 1.02
+## Version: 1.03
 ## SavedVariables: ZRA_vars
 embeds.xml
 
