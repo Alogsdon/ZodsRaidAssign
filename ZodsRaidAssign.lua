@@ -80,7 +80,7 @@ function ZRA.setRaidAssignment(raid, boss, group, column, members, initiator)
 	else
 		boss_data = ZRA_vars.raids[raid][boss]
 	end
-	local changed = setGetDiff(boss_data[group].columns[column], 'members', members)
+	local changed = ZRA.setGetDiff(boss_data[group].columns[column], 'members', members)
 	if changed and initiator ~= 'self' then
 		ZRA.dataChanged()
 	end
@@ -319,7 +319,7 @@ function ZRA.hearBossAssigns(mess, sender)
 		for colInd,membersMess in ipairs(columns) do
 			local members = dicestring(membersMess)
 			local header = BossData[groupInd].columns[colInd].header
-			local thisDiff = setGetDiff(BossData[groupInd].columns[colInd], 'members', members)
+			local thisDiff = ZRA.setGetDiff(BossData[groupInd].columns[colInd], 'members', members)
 			if thisDiff then
 				if diff then
 					diff = 'multiple changes'
@@ -335,7 +335,7 @@ function ZRA.hearBossAssigns(mess, sender)
 	end
 end
 
-function setGetDiff(oldVar, key, newAssign)
+function ZRA.setGetDiff(oldVar, key, newAssign)
 	local diff = nil
 	if #(oldVar[key]) > #newAssign then
 		for i,v in ipairs(newAssign) do
@@ -531,7 +531,6 @@ function ZRA.notFreshInstance()
 	for i,event in ipairs(events) do
 		if event.inst_type == "party" then
 			inside = true
-			iname = event.instance
 		else
 			if inside == true then
 				last_exit = i
@@ -551,9 +550,9 @@ end
 
 
 function ZRA.GroupDistribute(numGroups,numBuffers)
-	sets = {}
-	avg = numGroups / numBuffers
-	quota = 0
+	local sets = {}
+	local avg = numGroups / numBuffers
+	local quota = 0
 	for i = 1, numGroups do
 		if quota > 0 then
 			table.insert(sets[#sets], i)
@@ -569,7 +568,7 @@ end
 
 
 function ZRA.GetMakeMacro(name)
-	mi = GetMacroIndexByName(name)
+	local mi = GetMacroIndexByName(name)
 	if mi == 0 then 
 		CreateMacro(name, 'INV_Misc_QuestionMark', "")
 		mi = GetMacroIndexByName(name)
@@ -609,11 +608,11 @@ function ZRA.BuffMacro()
 	local mi = ZRA.mage_iter()
 	local di = ZRA.druid_iter()
 	local pi = ZRA.priest_iter()
-	s = ''
-	mages_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetMages())
+	local s = ''
+	local mages_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetMages())
 	s = s .. '/rw MAGE BUFFS\n'
 	for i, groups in pairs(mages_groups) do
-		mage = mi()
+		local mage = mi()
 		s = s .. '/rw ' .. mage.name .. ' groups '
 		for j, group in pairs(groups) do
 			s = s .. group .. ', '
@@ -625,10 +624,10 @@ function ZRA.BuffMacro()
 	ZRA.MacroSetBody(i, s)
 
 	s = ''
-	priest_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetPriests())
+	local priest_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetPriests())
 	s = s .. '/rw PRIEST BUFFS\n'
 	for i, groups in pairs(priest_groups) do
-		priest = pi()
+		local priest = pi()
 		s = s .. '/rw ' .. priest.name .. ' groups '
 		for j, group in pairs(groups) do
 			s = s .. group .. ', '
@@ -640,10 +639,10 @@ function ZRA.BuffMacro()
 	ZRA.MacroSetBody(i, s)
 
 	s = ''
-	druids_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetDruids())
+	local druids_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetDruids())
 	s = s .. '/rw DRUID BUFFS\n'
 	for i, groups in pairs(druids_groups) do
-		druid = di()
+		local druid = di()
 		s = s .. '/rw ' .. druid.name .. ' groups '
 		for j, group in pairs(groups) do
 			s = s .. group .. ', '
@@ -823,7 +822,7 @@ SlashCmdList["ZRAIDASSIGN"] = function(msg)
 		print('Recent instances')
 		ZRA.ParseEvents()
 	elseif (command == 'wipe') then
-		notFreshInstance()
+		ZRA.notFreshInstance()
 		print('wipe')
 	elseif (command == 'test1') then
 		ZRA_vars.roster = ZRA.testroster1
