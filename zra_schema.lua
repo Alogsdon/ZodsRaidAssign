@@ -1095,7 +1095,7 @@ ZRA.announcements = {
                 end
             end
             table.insert(lines,"BANISHES")
-            for i,v in ipairs(splitmess(banishes, ', ', 65)) do
+            for i,v in ipairs(ZRA.splitmess(banishes, ', ', 65)) do
                 table.insert(lines, v)
             end
             return lines
@@ -1191,7 +1191,7 @@ ZRA.announcements = {
                 end
             end
             table.insert(lines, "SHEEPS")
-            for i ,v in ipairs(splitmess(sheeps, ', ', 65)) do
+            for i ,v in ipairs(ZRA.splitmess(sheeps, ', ', 65)) do
                 table.insert(lines, v)
             end
             if #rdata[10].columns[1].members > 0 then
