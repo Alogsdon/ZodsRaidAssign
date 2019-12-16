@@ -916,13 +916,13 @@ ZRA.funcs = {
             end
             --backup tanks
             for i,v in ipairs(meleekicks) do
-                table.insert(ZRA_vars.raids['Molten Core'][9][2 + modulo(-i ,4)].columns[2].members, v)
+                table.insert(ZRA_vars.raids['Molten Core'][9][2 + ZRA.modulo(-i ,4)].columns[2].members, v)
             end
             for i,v in ipairs(mages) do
-                table.insert(ZRA_vars.raids['Molten Core'][9][2 + modulo(i - 1,4)].columns[2].members, v)
+                table.insert(ZRA_vars.raids['Molten Core'][9][2 + ZRA.modulo(i - 1,4)].columns[2].members, v)
             end
 
-            ZRA_vars.raids['Molten Core'][9][6].columns[1].members = remaining(ti)
+            ZRA_vars.raids['Molten Core'][9][6].columns[1].members = ZRA.remaining(ti)
         end,
         Majordomo = function()
             local hi = ZRA.tank_heal_iter()
@@ -934,7 +934,7 @@ ZRA.funcs = {
                 end
             end
             for i = 1, 5 do
-                i_adjust = 1 + modulo(i + 2, 5)
+                i_adjust = 1 + ZRA.modulo(i + 2, 5)
                 ZRA_vars.raids['Molten Core'][10][i_adjust].columns[1].members = {ti(), hi()}
             end
             for i = 6, 9 do
@@ -943,7 +943,7 @@ ZRA.funcs = {
                 end
             end
             --backup tanks
-            ZRA_vars.raids['Molten Core'][10][10].columns[1].members = remaining(ti)
+            ZRA_vars.raids['Molten Core'][10][10].columns[1].members = ZRA.remaining(ti)
         end,
         Ragnaros = function()
             local hi = ZRA.tank_heal_iter()

@@ -320,12 +320,12 @@ function ZRA.hearBossAssigns(mess, sender)
 	
 	local assignsMess = string.sub(mess,4)
 	local diff = nil
-	local groups = mysplit(assignsMess, '.')
+	local groups = ZRA.mysplit(assignsMess, '.')
 	for groupInd, colmnsMess in ipairs(groups) do
-		local columns = mysplit(colmnsMess, ',')
+		local columns = ZRA.mysplit(colmnsMess, ',')
 		local groupTitle = BossData[groupInd].title
 		for colInd,membersMess in ipairs(columns) do
-			local members = dicestring(membersMess)
+			local members = ZRA.dicestring(membersMess)
 			local header = BossData[groupInd].columns[colInd].header
 			local thisDiff = ZRA.setGetDiff(BossData[groupInd].columns[colInd], 'members', members)
 			if thisDiff then
@@ -397,7 +397,7 @@ function ZRA.sendBossAssigns(raidName, bossIndex, dest)
 end
 
 function ZRA.askForRosterPayload()
-	local guy_to_ask = tablefirstkey(ZRA.otherUsers)
+	local guy_to_ask = ZRA.tablefirstkey(ZRA.otherUsers)
 	if not guy_to_ask then return end
 	local request = {t = GetTime(), item = 'rosterPayload', askee = guy_to_ask}
 	if ZRA.requestSent then
@@ -409,7 +409,7 @@ function ZRA.askForRosterPayload()
 end
 
 function ZRA.askForBossAssigns()
-	local guy_to_ask = tablefirstkey(ZRA.otherUsers)
+	local guy_to_ask = ZRA.tablefirstkey(ZRA.otherUsers)
 	if not guy_to_ask then return end
 	local request = {t = GetTime(), item = 'bossAssigns', askee = guy_to_ask}
 	if ZRA.requestSent then
