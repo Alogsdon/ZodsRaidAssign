@@ -994,7 +994,7 @@ ZRA.announcements = {
                 phrase = phrase .. ' healed by ' .. table.concat(healnames, ", ")
                 table.insert(lines, phrase)
             end
-            table.insert(lines, 'Backup tanks are ' .. table.concat(codesToValsArr(rdata[5].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Backup tanks are ' .. table.concat(ZRA.codesToValsArr(rdata[5].columns[1].members, ZRA_vars.roster, 'name'), ", "))
             table.insert(lines, "BANISHES")
             local banishes = {}
             for i = 3, 4 do
@@ -1033,12 +1033,12 @@ ZRA.announcements = {
                 if #v.columns[1].members > 0 then 
                     phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
                 end
-                phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
+                phrase = phrase .. ' healed by ' .. table.concat(ZRA.codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
                 table.insert(lines, phrase)
             end
-            table.insert(lines, 'Backup tank(s) ' .. table.concat(codesToValsArr(rdata[4].columns[1].members, ZRA_vars.roster, 'name'), ", "))
-            table.insert(lines, 'Magic cleansers ' .. table.concat(codesToValsArr(rdata[5].columns[1].members, ZRA_vars.roster, 'name'), ", "))
-            table.insert(lines, 'Curse removers ' .. table.concat(codesToValsArr(rdata[5].columns[2].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Backup tank(s) ' .. table.concat(ZRA.codesToValsArr(rdata[4].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Magic cleansers ' .. table.concat(ZRA.codesToValsArr(rdata[5].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Curse removers ' .. table.concat(ZRA.codesToValsArr(rdata[5].columns[2].members, ZRA_vars.roster, 'name'), ", "))
             return lines
         end,
         Magmadar = function(rdata)
@@ -1049,9 +1049,9 @@ ZRA.announcements = {
             if #v.columns[1].members > 0 then
                 phrase = ZRA.shape(rdata[1].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
             end
-            phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(rdata[1].columns[2].members, ZRA_vars.roster, 'name'), ", ")
+            phrase = phrase .. ' healed by ' .. table.concat(ZRA.codesToValsArr(rdata[1].columns[2].members, ZRA_vars.roster, 'name'), ", ")
             table.insert(lines, phrase)
-            table.insert(lines, 'Backup tank(s) ' .. table.concat(codesToValsArr(rdata[2].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Backup tank(s) ' .. table.concat(ZRA.codesToValsArr(rdata[2].columns[1].members, ZRA_vars.roster, 'name'), ", "))
             return lines
         end,
         Gehennas = function(rdata)
@@ -1063,11 +1063,11 @@ ZRA.announcements = {
                 if #v.columns[1].members > 0 then 
                     phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
                 end
-                phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
+                phrase = phrase .. ' healed by ' .. table.concat(ZRA.codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
                 table.insert(lines, phrase)
             end
-            table.insert(lines, 'Backup tank(s) ' .. table.concat(codesToValsArr(rdata[4].columns[1].members, ZRA_vars.roster, 'name'), ", "))
-            table.insert(lines, 'Curse removers ' .. table.concat(codesToValsArr(rdata[5].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Backup tank(s) ' .. table.concat(ZRA.codesToValsArr(rdata[4].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Curse removers ' .. table.concat(ZRA.codesToValsArr(rdata[5].columns[1].members, ZRA_vars.roster, 'name'), ", "))
             return lines
         end,
         Garr = function(rdata)
@@ -1108,9 +1108,9 @@ ZRA.announcements = {
             if #v.columns[1].members > 0 then 
                 phrase = ZRA.shape(v.title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
             end
-            phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(v.columns[2].members, ZRA_vars.roster, 'name'), ", ")
+            phrase = phrase .. ' healed by ' .. table.concat(ZRA.codesToValsArr(v.columns[2].members, ZRA_vars.roster, 'name'), ", ")
             table.insert(lines, phrase)
-            table.insert(lines, 'Backup tanks ' .. table.concat(codesToValsArr(v.columns[3].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Backup tanks ' .. table.concat(ZRA.codesToValsArr(v.columns[3].members, ZRA_vars.roster, 'name'), ", "))
             return lines
         end,
         Baron = function(rdata)
@@ -1121,12 +1121,12 @@ ZRA.announcements = {
             if #v.columns[1].members > 0 then 
                 phrase = ZRA.shape(v.title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
             end
-            phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(v.columns[2].members, ZRA_vars.roster, 'name'), ", ")
+            phrase = phrase .. ' healed by ' .. table.concat(ZRA.codesToValsArr(v.columns[2].members, ZRA_vars.roster, 'name'), ", ")
             table.insert(lines, phrase)
             if #rdata[2].columns[1].members > 0 then
-                table.insert(lines, 'Backup tank(s) ' .. table.concat(codesToValsArr(rdata[2].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+                table.insert(lines, 'Backup tank(s) ' .. table.concat(ZRA.codesToValsArr(rdata[2].columns[1].members, ZRA_vars.roster, 'name'), ", "))
             end
-            table.insert(lines, 'Magic cleansers ' .. table.concat(codesToValsArr(rdata[3].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Magic cleansers ' .. table.concat(ZRA.codesToValsArr(rdata[3].columns[1].members, ZRA_vars.roster, 'name'), ", "))
             return lines
         end,
         Golemagg = function(rdata)
@@ -1138,10 +1138,10 @@ ZRA.announcements = {
                 if #v.columns[1].members > 0 then 
                     phrase = ZRA.shape(rdata[i].title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
                 end
-                phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
+                phrase = phrase .. ' healed by ' .. table.concat(ZRA.codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
                 table.insert(lines, phrase)
             end
-            table.insert(lines, 'Backup tank(s) ' .. table.concat(codesToValsArr(rdata[4].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+            table.insert(lines, 'Backup tank(s) ' .. table.concat(ZRA.codesToValsArr(rdata[4].columns[1].members, ZRA_vars.roster, 'name'), ", "))
             return lines
         end,
         Sulfuron = function(rdata)
@@ -1152,7 +1152,7 @@ ZRA.announcements = {
             if #v.columns[1].members > 0 then 
                 phrase = ZRA.shape(v.title) .. ' tanked by ' .. ZRA_vars.roster[v.columns[1].members[1]].name
             end
-            phrase = phrase .. ' healed by ' .. table.concat(codesToValsArr(v.columns[2].members, ZRA_vars.roster, 'name'), ", ")
+            phrase = phrase .. ' healed by ' .. table.concat(ZRA.codesToValsArr(v.columns[2].members, ZRA_vars.roster, 'name'), ", ")
             table.insert(lines, phrase)
             for i = 2, 5 do
                 local v = rdata[i]
@@ -1162,11 +1162,11 @@ ZRA.announcements = {
                     phrase = phrase .. ' healed by ' .. ZRA_vars.roster[v.columns[1].members[2]].name
                 end
                 table.insert(lines, phrase)
-                phrase = ZRA.shape(rdata[i].title) .. ' interupts: ' .. table.concat(codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
+                phrase = ZRA.shape(rdata[i].title) .. ' interupts: ' .. table.concat(ZRA.codesToValsArr(rdata[i].columns[2].members, ZRA_vars.roster, 'name'), ", ")
                 table.insert(lines, phrase)
             end
             if #rdata[6].columns[1].members > 0 then
-                table.insert(lines, 'Backup tank(s) ' .. table.concat(codesToValsArr(rdata[6].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+                table.insert(lines, 'Backup tank(s) ' .. table.concat(ZRA.codesToValsArr(rdata[6].columns[1].members, ZRA_vars.roster, 'name'), ", "))
             end
             return lines
         end,
@@ -1195,7 +1195,7 @@ ZRA.announcements = {
                 table.insert(lines, v)
             end
             if #rdata[10].columns[1].members > 0 then
-                table.insert(lines, 'Backup tank(s) ' .. table.concat(codesToValsArr(rdata[10].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+                table.insert(lines, 'Backup tank(s) ' .. table.concat(ZRA.codesToValsArr(rdata[10].columns[1].members, ZRA_vars.roster, 'name'), ", "))
             end
             return lines
         end,
@@ -1221,10 +1221,10 @@ ZRA.announcements = {
             end
             table.insert(lines, phrase)
 
-            phrase = 'Heal the tank with aggro: ' .. table.concat(codesToValsArr(v.columns[3].members, ZRA_vars.roster, 'name'), ", ")
+            phrase = 'Heal the tank with aggro: ' .. table.concat(ZRA.codesToValsArr(v.columns[3].members, ZRA_vars.roster, 'name'), ", ")
             table.insert(lines, phrase)
             if #rdata[2].columns[1].members > 0 then
-                table.insert(lines, 'Backup tank(s) ' .. table.concat(codesToValsArr(rdata[2].columns[1].members, ZRA_vars.roster, 'name'), ", "))
+                table.insert(lines, 'Backup tank(s) ' .. table.concat(ZRA.codesToValsArr(rdata[2].columns[1].members, ZRA_vars.roster, 'name'), ", "))
             end
             return lines
         end,
