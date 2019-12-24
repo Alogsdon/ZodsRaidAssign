@@ -65,6 +65,9 @@ function ZRA.onLoad()
 		table.insert(ZRA.CODES, string.sub(str, i, i))
 		ZRA.LETTER_MAP[string.sub(str, i, i)] = i
 	end
+	if not ZRA_vars then
+		ZRA.wipeVars()
+	end
 	if (not ZRA_vars.schema_version) or ZRA_vars.schema_version < ZRA.schema_version then
 		ZRA.wipeVars()
 		ZRA_vars.schema_version = ZRA.schema_version
@@ -267,6 +270,9 @@ function ZRA.HandleRemoteData(arg2, arg3, arg4)
 end
 
 function ZRA.wipeVars()
+	if not ZRA_vars then
+		ZRA_vars = {}
+	end
 	ZRA_vars.roster = {}
 	ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
 	ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
