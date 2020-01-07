@@ -1080,7 +1080,7 @@ ZRA.announcements = {
                     local phrase = first_person.name .. " banish " .. ZRA.shape(v.title)
                     table.insert(banishes, phrase)
                 elseif first_person then
-                    local temp = shallowcopy(v.columns[1].members)
+                    local temp = ZRA.shallowcopy(v.columns[1].members)
                     local temp2 = {}
                     local phrase = ZRA_vars.roster[table.remove(temp, 1)].name .. ' tanking ' .. ZRA.shape(v.title)
                     for _ ,vv in ipairs(temp) do

@@ -289,7 +289,7 @@ function ZRA.sendRosterData(dest)
 			table.insert(mess_arr,k .. v.name..ZRA.CLASS_MAP[v.class])
 		end
 	end
-	local lines = splitmess(mess_arr, ',', 220)
+	local lines = ZRA.splitmess(mess_arr, ',', 220)
 	for i,v in ipairs(lines) do
 		C_ChatInfo.SendAddonMessage("ZRA", "sr" .. v, 'WHISPER', dest)
 	end
@@ -798,8 +798,8 @@ end
 
 function ZRA.dropMembers()
 	ZRA_vars.roster = {}
-	ZRA_vars.raids = deepcopy(ZRA.raidschema)
-	ZRA_vars.roles = deepcopy(ZRA.roleschema)
+	ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
+	ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
 	ZRA.loadMembers()
 end
 
@@ -820,8 +820,8 @@ SlashCmdList["ZRAIDASSIGN"] = function(msg)
 	if command == 'menu' or command == '' or (not command) then
 		ZRA.OpenMenu()
 	elseif (command == 'clear') then
-		ZRA_vars.raids = deepcopy(ZRA.raidschema)
-		ZRA_vars.roles = deepcopy(ZRA.roleschema)
+		ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
+		ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
 		ZRA_vars.roster = {}
 		ZRA.myRosterChanged()
 		ZRA.pushNewRoster()
