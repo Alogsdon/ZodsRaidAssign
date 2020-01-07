@@ -4,7 +4,6 @@
 ## Author: Zodicus
 ## Version: 1.04
 ## SavedVariables: ZRA_vars
-embeds.xml
 
 zra_schema.lua
 ZodsRaidAssign.lua
