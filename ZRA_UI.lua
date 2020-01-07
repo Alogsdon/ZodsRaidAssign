@@ -185,7 +185,7 @@ function ZRA.onLoadUI()
 	f:SetBackdrop(backdrop)
 	-- create bg texture
 	f.texture = f:CreateTexture(nil, "BORDER")
-	f.texture:SetTexture(0,0,.5,.5)
+	f.texture:SetColorTexture(0,0,.5,.5)
 	f.texture:SetPoint("TOPLEFT", f, "TOPLEFT", 4, -4)
 	f.texture:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -4, 4)
 	f.texture:SetBlendMode("ADD")
@@ -497,7 +497,7 @@ function ZRA.catchAsignee(catcher, player)
 	ZRA.showAsignee(catcher, player, catcher.hover_ind )
 	table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'assigned ' .. player.name})
 	ZRA.sendBossAssigns(ZRA.current_tab, ZRA.getDropdownInd())
-	return f
+	--return catcher
 end
 
 function ZRA.showAsignee(catcher, player, where)
@@ -662,7 +662,7 @@ function ZRA.GetAGroupFrame()
 		f:SetFrameLevel(0)
 		f:SetBackdrop(backdrop)
 		f.texture = f:CreateTexture(nil, "BORDER")
-		f.texture:SetTexture(.5,.5,.5, 1)
+		f.texture:SetColorTexture(.5,.5,.5, 1)
 		f.texture:SetPoint("TOPLEFT", f, "TOPLEFT", 4, -4)
 		f.texture:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -4, 4)
 		f:SetBackdropColor(.3,.3,.3,.3)
@@ -744,7 +744,7 @@ function ZRA.getAPlayerFrame()
 	if i then
 		return ZRA.player_frames[i]
 	else
-		f = CreateFrame("Button", nil, ZRALayoutFrame.rosterParent);
+		local f = CreateFrame("Button", nil, ZRALayoutFrame.rosterParent);
 		f:SetWidth(ZRA.PLAYER_SIZE)
 		f:SetHeight(ZRA.PLAYER_SIZE)
 		f:SetBackdrop(backdrop2)

@@ -934,7 +934,7 @@ ZRA.funcs = {
                 end
             end
             for i = 1, 5 do
-                i_adjust = 1 + ZRA.modulo(i + 2, 5)
+                local i_adjust = 1 + ZRA.modulo(i + 2, 5)
                 ZRA_vars.raids['Molten Core'][10][i_adjust].columns[1].members = {ti(), hi()}
             end
             for i = 6, 9 do

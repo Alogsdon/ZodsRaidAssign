@@ -128,7 +128,7 @@ end
 function ZRA.getBossIndFromName(raid, bossName)
 	if raid == "Roles" then return "_" end
 	for i,v in ipairs(ZRA_vars.raids[raid]) do
-		if v.name == BossName then
+		if v.name == bossName then
 			return i
 		end
 	end
@@ -177,14 +177,11 @@ function ZRA.Greet()
 	C_ChatInfo.SendAddonMessage("ZRA", "hello", 'RAID')
 end
 
-_oldC_ChatInfoSendAddonMessage = C_ChatInfo.SendAddonMessage
-
-C_ChatInfo.SendAddonMessage = function(arg1, arg2, arg3, arg4, ... )
+hooksecurefunc(C_ChatInfo,"SendAddonMessage",function(arg1,arg2,arg3,arg4,...)
 	if arg1 == "ZRA" and ZRA.debugging then
 		print("ME->" .. arg3 .. (arg4 or '') ..": " .. arg2)
 	end
-	return _oldC_ChatInfoSendAddonMessage(arg1, arg2, arg3, arg4,...)
-end
+end)
 
 
 function ZRA.reGreet()
@@ -532,7 +529,7 @@ function ZRA.ParseEvents()
 				inside = false
 				local t = GetTime()
 				cnt = cnt + 1
-				print(cnt .. '. Exited ' .. iname.. ' ' .. string.format("%.1f", (GetTime() - event.time)/60) ..' mins ago')
+				print(cnt .. '. Exited ' .. iname.. ' ' .. string.format("%.1f", (t - event.time)/60) ..' mins ago')
 			end
 		end
 	end
@@ -622,7 +619,7 @@ function ZRA.BuffMacro()
 	local mi = ZRA.mage_iter()
 	local di = ZRA.druid_iter()
 	local pi = ZRA.priest_iter()
-	local s = ''
+	local s,i = ''
 	local mages_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetMages())
 	s = s .. '/rw MAGE BUFFS\n'
 	for i, groups in pairs(mages_groups) do
@@ -852,9 +849,9 @@ SlashCmdList["ZRAIDASSIGN"] = function(msg)
 		if arg1 then 
 			print('saving ' .. arg1)
 			ZRA_vars.saved_raids[arg1] = {}
-			ZRA_vars.saved_raids[arg1].roster = deepcopy(ZRA_vars.roster)
-			ZRA_vars.saved_raids[arg1].roles = deepcopy(ZRA_vars.roles)
-			ZRA_vars.saved_raids[arg1].raids = deepcopy(ZRA_vars.raids)
+			ZRA_vars.saved_raids[arg1].roster = ZRA.deepcopy(ZRA_vars.roster)
+			ZRA_vars.saved_raids[arg1].roles = ZRA.deepcopy(ZRA_vars.roles)
+			ZRA_vars.saved_raids[arg1].raids = ZRA.deepcopy(ZRA_vars.raids)
 		else
 			print('need a name to save by')
 		end
@@ -901,12 +898,12 @@ function ZRA.PrintHelp()
 	print('\'i\' shows instances, \'wipe\' removes last zone out, test{1,2} for test raid, clear, dontgray, debug')
 end
 
-function ZRA_dump(o)
+function ZRA.dump(o)
 	if type(o) == 'table' then
 		 local s = '{ '
 		 for k,v in pairs(o) do
 				if type(k) ~= 'number' then k = '"'..k..'"' end
-				s = s .. '['..k..'] = ' .. dump(v) .. ','
+				s = s .. '['..k..'] = ' .. ZRA.dump(v) .. ','
 		 end
 		 return s .. '} '
 	else
