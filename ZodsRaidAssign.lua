@@ -77,16 +77,23 @@ function ZRA.onLoad()
 	ZRA.Greet()
 end
 
-function ZRA.setRaidAssignment(raid, boss, group, column, members, initiator)
+
+function ZRA.getBossData(raid, boss)
+	local boss_data = nil
 	if not(type(boss) == 'number') then
 		boss = ZRA.getBossIndFromName(raid, boss)
 	end
-	local boss_data = nil
 	if raid == "Roles" then
 		boss_data = ZRA_vars.roles
 	else
 		boss_data = ZRA_vars.raids[raid][boss]
 	end
+	return boss_data
+end
+
+function ZRA.setRaidAssignment(raid, bossInd, group, column, members, initiator)
+	initiator = initiator or 'other'
+	local boss_data = ZRA.getBossData(raid, bossInd)
 	local changed = ZRA.setGetDiff(boss_data[group].columns[column], 'members', members)
 	if changed and initiator ~= 'self' then
 		ZRA.dataChanged()
@@ -96,6 +103,19 @@ end
 function ZRA.dataChanged()
 	ZRA.raidsAssignsVersion = ZRA.raidAssignsVersion()
 	ZRA.updateUI()
+end
+
+function ZRA.dropAsignee(playerCode, raid, bossInd, group, column, initiator)
+	initiator = initiator or 'other'
+	
+	local boss_data = ZRA.getBossData(raid, bossInd)
+	local mems_cpy = ZRA.shallowcopy(boss_data[group].columns[column].members)
+	for i,v in ipairs(mems_cpy) do
+		if v == playerCode then
+			table.remove(mems_cpy, i)
+		end
+	end
+	ZRA.setRaidAssignment(raid, bossInd, group, column, mems_cpy, initiator)
 end
 
 function ZRA.dropMissingAssignments(raid, boss, group, column, members)
@@ -151,8 +171,10 @@ function ZRA.onEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 			end
 		end
 	elseif event == "GROUP_JOINED" then
+		ZRA.loadMembers()
 		ZRA.Greet()
 	elseif event == "GROUP_ROSTER_UPDATE" then
+		ZRA.loadMembers()
 		ZRA.reGreet()
 	elseif event == 'PLAYER_ENTERING_WORLD' or event == 'PLAYER_LEAVING_WORLD' then
 		--unhandled onEvent
@@ -233,7 +255,7 @@ end
 function ZRA.HandleRemoteData(arg2, arg3, arg4)
 	local sender = arg4
 	local task = string.sub(arg2,0,2)
-	if ZRA.debugging then print('heard ' .. arg2) end
+	if ZRA.debugging then print('heard '.. arg4 .. '-'.. arg2 ) end
 	if task == 'he' then
 		ZRA.reGreet()
 		ZRA.otherUsers[sender] = true
@@ -503,6 +525,7 @@ function ZRA.deepcopy(orig, copies)
     return copy
 end
 
+ZRA.ROSTER_SOFT_CAP = 46
 --codes for player UID, to make pickling easier
 function ZRA.getUnusedCode()
 	for i,v in ipairs(ZRA.CODES) do
@@ -510,9 +533,49 @@ function ZRA.getUnusedCode()
 			return v
 		end
 	end
+	if #ZRA_vars.roster > ZRA.ROSTER_SOFT_CAP then
+		ZRA.updateRaidNums()
+		ZRA.tryDropExternals()
+	end
+	error("out of player codes")
 end
 
+function ZRA.tryDropExternals()
+	for k,v in pairs(ZRA_vars.roster) do
+		if v.raidNum == 0 then
+			if ZRA.countPlayerAssigns(k) == 0 then
+				ZRA_vars.roster[k] = nil
+			end
+		end
+	end
+end
 
+function ZRA.countPlayerAssigns(k)
+	local cnt = 0
+	for _, raid in pairs(ZRA_vars.raids) do
+		for _, boss in pairs(raid) do
+			for _, assignGroup in ipairs(boss) do
+				for _, column in ipairs(assignGroup.columns) do
+					for index, value in ipairs(column.members) do
+						if value == k then
+							cnt = cnt + 1
+						end
+					end
+				end
+			end
+		end
+	end
+	for _, assignGroup in ipairs(ZRA_vars.roles) do
+		for _, column in ipairs(assignGroup.columns) do
+			for index, value in ipairs(column.members) do
+				if value == k then
+					cnt = cnt + 1
+				end
+			end
+		end
+	end
+	return cnt
+end
 
 function ZRA.ParseEvents()
 	local events = ZRA_vars.events or {}
@@ -764,6 +827,8 @@ function ZRA.loadMembers()
 		end
 	end
 	ZRA.pushNewRoster()
+	ZRA.updateRoster()
+	ZRA.updateUI()
 end
 
 function ZRA.pushNewRoster()
@@ -793,10 +858,8 @@ function ZRA.updateRaidNums()
 	end
 end
 
-function ZRA.dropMembers()
-	ZRA_vars.roster = {}
-	ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
-	ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
+function ZRA.dropExternalMembers()
+	ZRA.tryDropExternals()
 	ZRA.loadMembers()
 end
 
@@ -806,7 +869,6 @@ function ZRA.getCodeFromName(n)
 			return k
 		end
 	end
-	error("out of player codes")
 end
 
 

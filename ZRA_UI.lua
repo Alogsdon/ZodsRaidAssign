@@ -1,6 +1,7 @@
 
 local addonName, ZRA = ...
 
+ZRA.UI = {}
 ZRA.lastColumnId = 0
 
 function ZRA.onUpdateUI()
@@ -328,7 +329,7 @@ function ZRA.onLoadUI()
 	drop_mems_btn:SetWidth(67)
 	drop_mems_btn:SetHeight(30)
 	drop_mems_btn:SetScript("OnClick", function()
-		ZRA.dropMembers()
+		ZRA.dropExternalMembers()
 		ZRA.updateRoster()
 		ZRA.updateUI()
 	end)
@@ -549,14 +550,9 @@ function ZRA.playerColor(player)
 	end
 end
 
-function ZRA.dropAsignee(columnframe, player)
-	--modify data
-	for i,v in ipairs(columnframe.dataRef.members) do
-		if ZRA_vars.roster[v].name == player.name then
-			table.remove(columnframe.dataRef.members, i)
-		end
-	end
-	--remove frames
+function ZRA.UIDropAsignee(columnframe, player)
+	local playerCode = ZRA.getCodeFromName(player.name)
+	ZRA.dropAsignee(playerCode, ZRA.current_tab, ZRA.getDropdownInd(), columnframe.groupind, columnframe.column, 'self')
 	for i,v in ipairs(columnframe.members) do
 		if v.player.name == player.name then
 			v:startHide()
@@ -630,11 +626,24 @@ function ZRA.GetAColumnFrame()
 		f.members = {}
 		f.catchGuy = ZRA.catchAsignee
 		f.showGuy = ZRA.showAsignee
-		f.dropGuy = ZRA.dropAsignee
+		f.dropGuy = ZRA.UIDropAsignee
 		f.adjustMembers = ZRA.columnAdjustMembers
 		f.hoverAdjust = ZRA.columnAdjustHover
 		table.insert(ZRA.column_frames, f)
 		return f
+	end
+end
+
+function ZRA.UI.ActiveFramesIter(frames_group)
+	local i = 0
+	local n = #frames_group
+	return function ()
+		while i <= n do
+			i = i + 1
+			if frames_group[i].busy == true then
+				return frames_group[i]
+			end
+		end
 	end
 end
 
