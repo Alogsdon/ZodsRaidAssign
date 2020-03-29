@@ -259,7 +259,7 @@ function ZRA.onLoadUI()
 	dragframe:Hide()
 
 
-	ZRA.updateRoster()
+	ZRA.updateRosterUI()
 	
 
 	--Generate Assignments
@@ -317,7 +317,7 @@ function ZRA.onLoadUI()
 	load_mems_btn:SetHeight(30)
 	load_mems_btn:SetScript("OnClick", function()
 		ZRA.loadMembers()
-		ZRA.updateRoster()
+		ZRA.updateRosterUI()
 		ZRA.updateUI()
 	end)
 	load_mems_btn:Show()
@@ -330,7 +330,7 @@ function ZRA.onLoadUI()
 	drop_mems_btn:SetHeight(30)
 	drop_mems_btn:SetScript("OnClick", function()
 		ZRA.dropExternalMembers()
-		ZRA.updateRoster()
+		ZRA.updateRosterUI()
 		ZRA.updateUI()
 	end)
 	drop_mems_btn:Show()
@@ -373,7 +373,7 @@ function ZRA.onLoadUI()
 	f:Hide()
 end
 
-function ZRA.updateRoster()
+function ZRA.updateRosterUI()
 	ZRA.freeFrames(ZRA.player_frames)
 	ZRA.updateRaidNums()
 	
@@ -808,7 +808,7 @@ function ZRA.OpenMenu()
 		ZRAGenAssBtn:GetScript("OnClick")()
 	end
 	ZRALayoutFrame:Show()
-	ZRA.updateRoster()
+	ZRA.updateRosterUI()
 	ZRA.updateUI()
 end
 
