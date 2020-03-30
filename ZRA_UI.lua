@@ -30,7 +30,7 @@ function ZRA.onUpdateUI()
 	
 end
 
-function ZRA.updateUI()
+function ZRA.refreshUI()
 	if not ZRALayoutFrame:IsVisible() then return end
 
 	local raid = ZRA.current_tab or 'Roles'
@@ -257,9 +257,6 @@ function ZRA.onLoadUI()
 	dragframe.Text:SetTextColor(0,0,0)
 	dragframe:SetMovable(true)
 	dragframe:Hide()
-
-
-	ZRA.updateRosterUI()
 	
 
 	--Generate Assignments
@@ -273,15 +270,13 @@ function ZRA.onLoadUI()
 			--print('generating assignments for ' .. ZRA.current_tab)
 			ZRA.funcs.Roles()
 			ZRA.assignmentsModified("Roles", 0, "self")
-			ZRA.sendBossAssigns("Roles")
 		else
 			--print('generating assignments for ' .. ZRA.current_tab .. ' ' .. ZRA.getDropdownName())
 			ZRA.funcs[ZRA.current_tab][ZRA.getDropdownName()]()
-			ZRA.assignmentsModified("Roles", 0, "self")
-			ZRA.sendBossAssigns(ZRA.current_tab, ZRA.getDropdownInd())
+			ZRA.assignmentsModified(ZRA.current_tab, ZRA.getDropdownInd(), "self")
 		end
 		table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  ZRA.getDropdownName() or "_", diff = 'I auto filled'})
-		ZRA.updateUI()
+		ZRA.refreshUI()
 	end)
 	gen_ass_btn:Show()
 
@@ -320,7 +315,7 @@ function ZRA.onLoadUI()
 	load_mems_btn:SetScript("OnClick", function()
 		ZRA.loadMembers()
 		ZRA.updateRosterUI()
-		ZRA.updateUI()
+		ZRA.refreshUI()
 	end)
 	load_mems_btn:Show()
 
@@ -333,7 +328,7 @@ function ZRA.onLoadUI()
 	drop_mems_btn:SetScript("OnClick", function()
 		ZRA.dropExternalMembers()
 		ZRA.updateRosterUI()
-		ZRA.updateUI()
+		ZRA.refreshUI()
 	end)
 	drop_mems_btn:Show()
 
@@ -373,6 +368,16 @@ function ZRA.onLoadUI()
 
 	ZRA.showRoles()
 	f:Hide()
+
+	ZRA.updateRosterUI()
+end
+
+
+local old_zra_roster_modified = ZRA.rosterModified
+function ZRA.rosterModified(...)
+	old_zra_roster_modified(...)
+	local initiator = ...
+	ZRA.updateRosterUI()
 end
 
 function ZRA.updateRosterUI()
@@ -386,6 +391,9 @@ function ZRA.updateRosterUI()
 	table.sort(temp, function(a, b) return(a.class < b.class) end)
 	for i, r in ipairs(temp) do
 		ZRA.setAPlayerFrame(r)
+	end
+	if ZRALayoutFrame and ZRALayoutFrame:IsShown() then 
+		ZRA.refreshUI()
 	end
 end
 
@@ -431,9 +439,7 @@ function ZRA.tabClicked(key, tabindex)
 	return function()
 		PanelTemplates_SetTab(ZRALayoutFrame, tabindex)
 		ZRA.current_tab = key
-		if ZRA.assignmentsAreBlank(ZRA.current_tab or "Roles", ZRA.getDropdownInd()) then
-			ZRAGenAssBtn:GetScript("OnClick")()
-		end
+		
 
 		if key == "Roles" then
 			ZRA.showRoles()
@@ -452,6 +458,10 @@ function ZRA.tabClicked(key, tabindex)
 			UIDropDownMenu_SetText(ZRAFightDropDown, ZRA_vars.raids[ZRA.current_tab][ind].name)
 			ZRA.showBoss(key)
 		end
+
+		if ZRA.assignmentsAreBlank(ZRA.current_tab or "Roles", ZRA.getDropdownInd()) then
+			--ZRAGenAssBtn:GetScript("OnClick")()
+		end
 	end
 end
 
@@ -467,7 +477,7 @@ end
 function ZRA.showBoss()
 	
 
-	ZRA.updateUI()
+	ZRA.refreshUI()
 end
 
 function ZRA.freeFrames(frames)
@@ -499,7 +509,6 @@ function ZRA.catchAsignee(catcher, player)
 	setZRA(ZRA.current_tab, ZRA.getDropdownInd(), catcher.groupind, catcher.column , updatedMembers, 'self')
 	ZRA.showAsignee(catcher, player, catcher.hover_ind )
 	table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'assigned ' .. player.name})
-	ZRA.sendBossAssigns(ZRA.current_tab, ZRA.getDropdownInd())
 	--return catcher
 end
 
@@ -562,7 +571,6 @@ function ZRA.UIDropAsignee(columnframe, player)
 		end
 	end
 	table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'removed ' .. player.name})
-	ZRA.sendBossAssigns(ZRA.current_tab, ZRA.getDropdownInd())
 end
 
 function ZRA.mouseOverEnter(player)
@@ -802,16 +810,11 @@ ZRA.scriptframe:SetScript("OnUpdate", ZRA.onUpdateUI)
 
 
 function ZRA.OpenMenu()
-	ZRA.updateRaidNums()
 	if not ZRA.current_tab then 
 		ZRA.tabClicked("Roles")()
 	end
-	if ZRA.assignmentsAreBlank(ZRA.current_tab or "Roles", ZRA.getDropdownInd()) then
-		ZRAGenAssBtn:GetScript("OnClick")()
-	end
 	ZRALayoutFrame:Show()
-	ZRA.updateRosterUI()
-	ZRA.updateUI()
+	ZRA.refreshUI()
 end
 
 function ZRA.closeOnClick(self)

@@ -2,11 +2,19 @@
 local addonName, ZRA = ...
 
 function ZRA.onUpdate()
-	
+
 end
 
 function ZRA.assignmentsModified(raid, boss, initiator)
+	raid = raid or 'none'
+	boss = boss or 0
 	--just a function to hook into
+	print('assignments modified by ' .. initiator .. " raid: " .. raid .. " boss: " .. boss)
+end
+
+function ZRA.rosterModified(initiator)
+	print('roster modified by ' .. initiator)
+	--hook into
 end
 
 function ZRA.onLoad()
@@ -76,14 +84,14 @@ function ZRA.setRaidAssignment(raid, bossInd, group, column, members, initiator)
 	initiator = initiator or 'other'
 	local boss_data = ZRA.getBossData(raid, bossInd)
 	local changed = ZRA.setGetDiff(boss_data[group].columns[column], 'members', members)
-	if changed and initiator ~= 'self' then
-		ZRA.dataChanged()
+	if changed  then
+		ZRA.assignmentsModified(raid, bossInd, initiator)
 	end
 end
 
 function ZRA.dataChanged()
 	ZRA.raidsAssignsVersion = ZRA.raidAssignsVersion()
-	ZRA.updateUI()
+	ZRA.refreshUI()
 end
 
 function ZRA.dropAsignee(playerCode, raid, bossInd, group, column, initiator)
@@ -198,7 +206,7 @@ function ZRA.wipeVars()
 	ZRA_vars.roster = {}
 	ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
 	ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
-	ZRA.myRosterChanged()
+	ZRA.rosterModified('self')
 end
 
 
@@ -263,7 +271,7 @@ function ZRA.getUnusedCode()
 			return v
 		end
 	end
-	if #ZRA_vars.roster > ZRA.ROSTER_SOFT_CAP then
+	if ZRA.tablelen(ZRA_vars.roster) > ZRA.ROSTER_SOFT_CAP then
 		ZRA.updateRaidNums()
 		ZRA.tryDropExternals()
 	end
@@ -382,6 +390,8 @@ function ZRA.raid_iter()
 end
 
 function ZRA.loadMembers()
+	--adds current group members to roster
+	local num_before = ZRA.tablelen(ZRA_vars.roster)
 	local reverse_ind = {}
 	for k,v in pairs(ZRA_vars.roster) do
 		reverse_ind[v.name] = k
@@ -408,17 +418,14 @@ function ZRA.loadMembers()
 			}
 		end
 	end
-	ZRA.pushNewRoster()
-	ZRA.updateRosterUI()
-	ZRA.updateUI()
-end
-
-
-function ZRA.myRosterChanged()
-	if ZRALayoutFrame and ZRALayoutFrame:IsShown() then 
-		ZRA.OpenMenu()
+	local num_after = ZRA.tablelen(ZRA_vars.roster)
+	if num_after > num_before then
+		ZRA.rosterModified('self')
 	end
 end
+
+
+
 
 function ZRA.updateRaidNums()
 	local reverse_ind = {}
@@ -449,6 +456,13 @@ function ZRA.getCodeFromName(n)
 	end
 end
 
+function ZRA.reset()
+	ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
+	ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
+	ZRA_vars.roster = {}
+	ZRA.rosterModified('self')
+
+end
 
 --- slash handler
 SLASH_ZRAIDASSIGN1 = "/zra"
@@ -457,11 +471,7 @@ SlashCmdList["ZRAIDASSIGN"] = function(msg)
 	if command == 'menu' or command == '' or (not command) then
 		ZRA.OpenMenu()
 	elseif (command == 'clear') then
-		ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
-		ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
-		ZRA_vars.roster = {}
-		ZRA.myRosterChanged()
-		ZRA.pushNewRoster()
+		ZRA.reset()
 		print('cleared')
 	elseif (command == 'debug') then
 		ZRA.debugging = true
@@ -477,14 +487,14 @@ SlashCmdList["ZRAIDASSIGN"] = function(msg)
 		print('wipe')
 	elseif (command == 'test1') then
 		ZRA_vars.roster = ZRA.testroster1
-		ZRA.myRosterChanged()
-		ZRA.pushNewRoster()
+		ZRA.rosterModified('self')
 		print('using test roster 1')
 	elseif (command == 'test2') then
 		ZRA_vars.roster = ZRA.testroster2
-		ZRA.myRosterChanged()
-		ZRA.pushNewRoster()
+		ZRA.rosterModified('self')
 		print('using test roster 2')
+	elseif (command == 'state') then
+		print(ZRA.state)
 	elseif (command == 'save') then
 		if arg1 then 
 			print('saving ' .. arg1)
@@ -503,8 +513,7 @@ SlashCmdList["ZRAIDASSIGN"] = function(msg)
 				ZRA_vars.roles = ZRA_vars.saved_raids[arg1].roles
 				ZRA_vars.raids = ZRA_vars.saved_raids[arg1].raids
 				table.insert(ZRA.assignUpdateHistory, {update_type = 'roster', sender = "ME", mess = 'loaded a stored raid, ' .. arg1})
-				ZRA.myRosterChanged()
-				ZRA.pushNewRoster()
+				ZRA.rosterModified('self')
 			else
 				print('coudlnt load raid named ' .. arg1 '. check the name')
 				print("saved raids available to load")
