@@ -461,7 +461,6 @@ function ZRA.reset()
 	ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
 	ZRA_vars.roster = {}
 	ZRA.rosterModified('self')
-
 end
 
 --- slash handler

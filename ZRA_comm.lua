@@ -5,40 +5,45 @@ ZRA.com_version = "2"
 ZRA.default_request_wait = 4
 
 function ZRA.onLoadComms()
-    C_ChatInfo.RegisterAddonMessagePrefix("ZRA")
-    ZRA.otherUsers = {}
-    ZRA.state = ZRA.STATES.FRESH
-	ZRA.request_queue = {}
-	
-	ZRA.unhandled_msgs = {}
-	ZRA.backlogged_msgs = {}
+		C_ChatInfo.RegisterAddonMessagePrefix("ZRA")
+		ZRA.otherUsers = {} --needed?
+		ZRA.request_queue = {} --needed?
+
+		ZRA.setState(ZRA.STATES.FRESH)
+		ZRA.unhandled_msgs = {}
+		ZRA.backlogged_msgs = {}
 end
 
 function ZRA.CommOnEvent(frame, event, arg1, arg2, arg3, arg4, ...)
-
-	if event == "CHAT_MSG_ADDON" then
-		if arg1 == "ZRA" then
-			local sender = string.gmatch(arg4,'(%w+)-')() or arg4
-			if sender == UnitName("player") then
-			else
-				ZRA.HandleRemoteData(arg2, arg3, sender)
+	if pcall (function()
+		if event == "CHAT_MSG_ADDON" then
+			if arg1 == "ZRA" then
+				local sender = string.gmatch(arg4,'(%w+)-')() or arg4
+				if sender == UnitName("player") then
+				else
+					ZRA.HandleRemoteData(arg2, arg3, sender)
+				end
 			end
-		end
-	elseif event == "GROUP_JOINED" then
-		ZRA.setState(ZRA.STATES.FRESH)
-	elseif event == "GROUP_ROSTER_UPDATE" then
-		ZRA.loadMembers()
-		ZRA.reGreet()
-	elseif event == 'PLAYER_ENTERING_WORLD' or event == 'PLAYER_LEAVING_WORLD' then
-		--unhandled onEvent
-		local events = ZRA_vars.events or {}
-		ZRA_vars.events = events
-		local iname, instanceType, _, _, _, _, _, instanceID = GetInstanceInfo()
-		if #events==0 or (not (instanceType == events[#events].inst_type)) then
-			table.insert(events, {event = event, time = GetTime(), instance = iname, inst_type = instanceType, id = instanceID})
+		elseif event == "GROUP_JOINED" then
+			ZRA.setState(ZRA.STATES.FRESH)
+		elseif event == "GROUP_ROSTER_UPDATE" then
+			ZRA.loadMembers()
+			ZRA.reGreet()
+		elseif event == 'PLAYER_ENTERING_WORLD' or event == 'PLAYER_LEAVING_WORLD' then
+			--unhandled onEvent
+			local events = ZRA_vars.events or {}
+			ZRA_vars.events = events
+			local iname, instanceType, _, _, _, _, _, instanceID = GetInstanceInfo()
+			if #events==0 or (not (instanceType == events[#events].inst_type)) then
+				table.insert(events, {event = event, time = GetTime(), instance = iname, inst_type = instanceType, id = instanceID})
+			else
+			end
 		else
 		end
+	end) then --good
 	else
+		print('ZRA had an error in the comm module, resetting')
+		ZRA.reset()
 	end
 end
 
@@ -47,35 +52,42 @@ function ZRA.sendAddonMessage(mess, channel, dest)
 end
 
 function ZRA.CommOnUpdate()
-	if ZRA.requestSent then
-		if GetTime() - ZRA.requestSent.t > ZRA.default_request_wait then
-			ZRA.requestTimeout()
+	if pcall (function()
+		if ZRA.requestSent then
+			if GetTime() - ZRA.requestSent.t > ZRA.default_request_wait then
+				print((GetTime() - ZRA.requestSent.t))
+				ZRA.requestTimeout()
+			end
 		end
-	end
 
-	if ZRA.state == ZRA.STATES.FRESH then
-		ZRA.Greet()
-	elseif ZRA.state == ZRA.STATES.GREETED then
-		while #ZRA.unhandled_msgs > 0 do
-			local msg = table.remove(ZRA.unhandled_msgs, 1)
-			if msg.task == 'hi' then
-				ZRA.askForRoster(msg.sender)
-			else
-				table.insert(ZRA.backlogged_msgs, msg)
+		if ZRA.state == ZRA.STATES.FRESH then
+			ZRA.Greet()
+		elseif ZRA.state == ZRA.STATES.GREETED then
+			while #ZRA.unhandled_msgs > 0 do
+				local msg = table.remove(ZRA.unhandled_msgs, 1)
+				if msg.task == 'hi' then
+					ZRA.askForRoster(msg.sender)
+				else
+					table.insert(ZRA.backlogged_msgs, msg)
+				end
 			end
-		end
-	elseif ZRA.state == ZRA.STATES.GETTING_ROSTER then
-	elseif ZRA.state == ZRA.STATES.GOOD then
-		while #ZRA.unhandled_msgs > 0 do
-			local msg = table.remove(ZRA.unhandled_msgs, 1)
-			if msg.task == 'hi' then
-				--make sure roster is the same, something is wrong if not. discard
-			else
-				table.insert(ZRA.backlogged_msgs, msg)
+		elseif ZRA.state == ZRA.STATES.GETTING_ROSTER then
+		elseif ZRA.state == ZRA.STATES.GOOD then
+			while #ZRA.unhandled_msgs > 0 do
+				local msg = table.remove(ZRA.unhandled_msgs, 1)
+				if msg.task == 'hi' then
+					--make sure roster is the same, something is wrong if not. discard
+				else
+					table.insert(ZRA.backlogged_msgs, msg)
+				end
 			end
+		elseif ZRA.state == ZRA.STATES.ASKED then
+		elseif ZRA.state == ZRA.STATES.GETTING_ASSIGNS then
 		end
-	elseif ZRA.state == ZRA.STATES.ASKED then
-	elseif ZRA.state == ZRA.STATES.GETTING_ASSIGNS then
+	end) then --good
+	else
+		print('ZRA had an error in the comm module, resetting')
+		ZRA.reset()
 	end
 end
 
@@ -91,6 +103,9 @@ ZRA.STATES = {
     COLLECTING_ROSTERS = 7
 }
 function ZRA.setState(state)
+	if state == ZRA.STATES.GOOD then
+
+	end
 	ZRA.state = state
 end
 
@@ -133,9 +148,9 @@ end
 
 function ZRA.requestTimeout()
 	local request = ZRA.requestSent
+	ZRA.requestSent = nil
 	if request.item == 'greet' then
 		ZRA.useMyRoster()
-		
 	elseif request.item == 'rosterPayload' then
 		ZRA.otherUsers[request.askee] = nil
 		ZRA.askForRosterPayload()
@@ -143,7 +158,7 @@ function ZRA.requestTimeout()
 		ZRA.otherUsers[request.askee] = nil
 		ZRA.askForBossAssigns()
 	end
-	ZRA.requestSent = nil
+	
 	if #ZRA.request_queue > 0 then
 		ZRA.sendRequestFromQueue()
 	end
@@ -321,6 +336,7 @@ end
 
 
 function ZRA.sendBossAssigns(raidName, bossIndex, dest)
+	error('yo dude')
 	if not bossIndex then bossIndex = 0 end
 	local bossAssigns
 	if bossIndex == -1 then
@@ -356,7 +372,18 @@ hooksecurefunc(C_ChatInfo,"SendAddonMessage",function(arg1,arg2,arg3,arg4,...)
 	end
 end)
 
+local old_zra_reset = ZRA.reset
+function ZRA.reset(...)
+	ZRA.commReset()
+	old_zra_reset(...)
+end
 
+function ZRA.commReset()
+	ZRA.setState(ZRA.STATES.FRESH)
+	ZRA.unhandled_msgs = {}
+	ZRA.backlogged_msgs = {}
+	ZRA.requestSent = nil
+end
 
 
 ZRA.commscriptframe = CreateFrame("Frame", 'ZRACOMMFrame')

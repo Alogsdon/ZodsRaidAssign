@@ -497,19 +497,24 @@ function ZRA.freeFrames(frames)
 end
 
 function ZRA.catchAsignee(catcher, player)
-	local code = ZRA.getCodeFromName(player.name)
-	local setZRA = ZRA.setRaidAssignment
-	for i,v in pairs(catcher.dataRef.members) do
-		--dont allowe dupplicated
-		if code == v then return end
+	if pcall(function()
+		local code = ZRA.getCodeFromName(player.name)
+		local setZRA = ZRA.setRaidAssignment
+		for i,v in pairs(catcher.dataRef.members) do
+			--dont allowe dupplicated
+			if code == v then return end
+		end
+		catcher.hover_ind = min(catcher.hover_ind, #catcher.members + 1)
+		local updatedMembers = ZRA.shallowcopy(catcher.dataRef.members)
+		table.insert(updatedMembers, catcher.hover_ind , code)
+		setZRA(ZRA.current_tab, ZRA.getDropdownInd(), catcher.groupind, catcher.column , updatedMembers, 'self')
+		ZRA.showAsignee(catcher, player, catcher.hover_ind )
+		table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'assigned ' .. player.name})
+	end) then 
+	else
+		print('ZRA had an error in the UI, resetting')
+		ZRA.reset()
 	end
-	catcher.hover_ind = min(catcher.hover_ind, #catcher.members + 1)
-	local updatedMembers = ZRA.shallowcopy(catcher.dataRef.members)
-	table.insert(updatedMembers, catcher.hover_ind , code)
-	setZRA(ZRA.current_tab, ZRA.getDropdownInd(), catcher.groupind, catcher.column , updatedMembers, 'self')
-	ZRA.showAsignee(catcher, player, catcher.hover_ind )
-	table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'assigned ' .. player.name})
-	--return catcher
 end
 
 function ZRA.showAsignee(catcher, player, where)
@@ -562,15 +567,21 @@ function ZRA.playerColor(player)
 end
 
 function ZRA.UIDropAsignee(columnframe, player)
-	local playerCode = ZRA.getCodeFromName(player.name)
-	ZRA.dropAsignee(playerCode, ZRA.current_tab, ZRA.getDropdownInd(), columnframe.groupind, columnframe.column, 'self')
-	for i,v in ipairs(columnframe.members) do
-		if v.player.name == player.name then
-			v:startHide()
-			table.remove(columnframe.members, i)
+	if pcall(function()
+		local playerCode = ZRA.getCodeFromName(player.name)
+		ZRA.dropAsignee(playerCode, ZRA.current_tab, ZRA.getDropdownInd(), columnframe.groupind, columnframe.column, 'self')
+		for i,v in ipairs(columnframe.members) do
+			if v.player.name == player.name then
+				v:startHide()
+				table.remove(columnframe.members, i)
+			end
 		end
+		table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'removed ' .. player.name})
+	end) then --good
+	else
+		print('ZRA had an error in the UI module, resetting')
+		ZRA.reset()
 	end
-	table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'removed ' .. player.name})
 end
 
 function ZRA.mouseOverEnter(player)
@@ -712,16 +723,22 @@ function ZRA.getMouseFrame(frames)
 end
 
 function ZRA.pickUpPlayer(copying_frame, player)
-	ZDragframe:SetPoint("TOPLEFT", copying_frame, "TOPLEFT")
-	ZDragframe:SetPoint("BOTTOMRIGHT", copying_frame, "TOPLEFT", ZRA.PLAYER_SIZE, -ZRA.PLAYER_SIZE)
-	--ZDragframe:SetHeight(ZRA.PLAYER_SIZE)
-	--ZDragframe:SetWidth(ZRA.PLAYER_SIZE)
-	local color = ZRA.playerColor(player)
-	ZDragframe:SetBackdropColor(color.r, color.g, color.b,1)
-	ZDragframe.Text:SetText(string.sub(player.name,1,4))
-	ZDragframe:Show()
-	ZDragframe:StartMoving()
-	ZDragframe.player = player
+	if pcall(function()
+		ZDragframe:SetPoint("TOPLEFT", copying_frame, "TOPLEFT")
+		ZDragframe:SetPoint("BOTTOMRIGHT", copying_frame, "TOPLEFT", ZRA.PLAYER_SIZE, -ZRA.PLAYER_SIZE)
+		--ZDragframe:SetHeight(ZRA.PLAYER_SIZE)
+		--ZDragframe:SetWidth(ZRA.PLAYER_SIZE)
+		local color = ZRA.playerColor(player)
+		ZDragframe:SetBackdropColor(color.r, color.g, color.b,1)
+		ZDragframe.Text:SetText(string.sub(player.name,1,4))
+		ZDragframe:Show()
+		ZDragframe:StartMoving()
+		ZDragframe.player = player
+	end) then --good
+	else
+		print('ZRA had an error in the UI module, resetting')
+		ZRA.reset()
+	end
 end
 
 
@@ -800,6 +817,17 @@ function ZRA.countBusyFrames(frames)
 	return cnt
 end
 
+
+
+local old_zra_reset = ZRA.reset
+function ZRA.reset(...)
+	ZRA.UIReset()
+	old_zra_reset(...)
+end
+
+function ZRA.UIReset()
+	ZRALayoutFrame:Hide()
+end
 
 
 ZRA.scriptframe = CreateFrame("Frame")
