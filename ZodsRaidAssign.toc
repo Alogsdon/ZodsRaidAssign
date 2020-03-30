@@ -6,5 +6,6 @@
 ## SavedVariables: ZRA_vars
 
 zra_schema.lua
+zra_bwl_schema.lua
 ZodsRaidAssign.lua
 ZRA_UI.lua

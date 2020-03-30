@@ -29,6 +29,18 @@ function ZRA.requestTimeout()
 	end
 end
 
+function ZRA.mapRaids()
+	local m = {
+		['Roles'] = '0',
+	}
+	local i = 1
+	for k,_ in pairs(ZRA_vars.raids) do
+		m[k] = tostring(i)
+		i = i + 1
+	end
+	return m	
+end
+
 function ZRA.onLoad()
 	C_ChatInfo.RegisterAddonMessagePrefix("ZRA")
 	ZRA.otherUsers = {}
@@ -50,11 +62,7 @@ function ZRA.onLoad()
 	for k,v in pairs(ZRA.CLASS_MAP) do
 		ZRA.CLASS_MAP_BACK[v] = k
 	end
-	ZRA.RAID_MAP = {
-		['Roles'] = '0',
-		['Onyxias Lair'] = '1',
-		['Molten Core'] = '2',
-	}
+	ZRA.RAID_MAP = ZRA.mapRaids() 
 	ZRA.RAID_MAP_BACK = {}
 	for k,v in pairs(ZRA.RAID_MAP) do
 		ZRA.RAID_MAP_BACK[v] = k
