@@ -2,19 +2,11 @@
 local addonName, ZRA = ...
 
 function ZRA.onUpdate()
-
+	
 end
 
-function ZRA.mapRaids()
-	local m = {
-		['Roles'] = '0',
-	}
-	local i = 1
-	for k,_ in pairs(ZRA_vars.raids) do
-		m[k] = tostring(i)
-		i = i + 1
-	end
-	return m	
+function ZRA.assignmentsModified(raid, boss, initiator)
+	--just a function to hook into
 end
 
 function ZRA.onLoad()
@@ -66,6 +58,18 @@ function ZRA.getBossData(raid, boss)
 		boss_data = ZRA_vars.raids[raid][boss]
 	end
 	return boss_data
+end
+
+function ZRA.mapRaids()
+	local m = {
+		['Roles'] = '0',
+	}
+	local i = 1
+	for k,_ in pairs(ZRA_vars.raids) do
+		m[k] = tostring(i)
+		i = i + 1
+	end
+	return m	
 end
 
 function ZRA.setRaidAssignment(raid, bossInd, group, column, members, initiator)
@@ -249,26 +253,7 @@ function ZRA.checkSavedVars()
 end
 
 -- Save copied tables in `copies`, indexed by original table.
-function ZRA.deepcopy(orig, copies)
-    copies = copies or {}
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        if copies[orig] then
-            copy = copies[orig]
-        else
-            copy = {}
-            copies[orig] = copy
-            setmetatable(copy, ZRA.deepcopy(getmetatable(orig), copies))
-            for orig_key, orig_value in next, orig, nil do
-                copy[ZRA.deepcopy(orig_key, copies)] = ZRA.deepcopy(orig_value, copies)
-            end
-        end
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
+
 
 ZRA.ROSTER_SOFT_CAP = 46
 --codes for player UID, to make pickling easier
@@ -322,156 +307,8 @@ function ZRA.countPlayerAssigns(k)
 	return cnt
 end
 
-function ZRA.ParseEvents()
-	local events = ZRA_vars.events or {}
-	local inside = false
-	local iname = ''
-	local cnt = 0
-	for i,event in ipairs(events) do
-		if event.inst_type == "party" then
-			inside = true
-			iname = event.instance
-		else
-			if inside == true then
-				--exited
-				inside = false
-				local t = GetTime()
-				cnt = cnt + 1
-				print(cnt .. '. Exited ' .. iname.. ' ' .. string.format("%.1f", (t - event.time)/60) ..' mins ago')
-			end
-		end
-	end
-end
-
-function ZRA.notFreshInstance()
-	local last_exit = false
-	local events = ZRA_vars.events or {}
-	local inside = false
-	for i,event in ipairs(events) do
-		if event.inst_type == "party" then
-			inside = true
-		else
-			if inside == true then
-				last_exit = i
-			end
-		end
-	end
-	if last_exit then
-		table.remove(events, last_exit)
-	end
-end
-
-function ZRA.MakeMacros()
-	ZRA.BuffMacro()
-end
 
 
-
-
-function ZRA.GroupDistribute(numGroups,numBuffers)
-	local sets = {}
-	local avg = numGroups / numBuffers
-	local quota = 0
-	for i = 1, numGroups do
-		if quota > 0 then
-			table.insert(sets[#sets], i)
-			quota = quota - 1
-		else
-			table.insert(sets, {})
-			table.insert(sets[#sets], i)
-			quota = quota + avg - 1
-		end
-	end
-	return sets
-end
-
-
-function ZRA.GetMakeMacro(name)
-	local mi = GetMacroIndexByName(name)
-	if mi == 0 then 
-		CreateMacro(name, 'INV_Misc_QuestionMark', "")
-		mi = GetMacroIndexByName(name)
-	end
-	return mi
-end
-
-function ZRA.MacroSetBody(i, body)
-	local name,	texture = GetMacroInfo(i)
-	EditMacro(i, name, texture, body)
-end
-
-
-ZRA.SHAPES = {
-	skull = true,
-	x = true,
-	square = true,
-	moon = true,
-	triangle = true,
-	diamond = true,
-	circle = true,
-	star = true,
-}
-
-function ZRA.shape(s)
-	if ZRA.SHAPES[string.lower(s)] then
-		return '{' .. s .. '}'
-	else
-		return s
-	end
-end
-
-
-
-function ZRA.BuffMacro()
-	local numgroups = 8
-	local mi = ZRA.mage_iter()
-	local di = ZRA.druid_iter()
-	local pi = ZRA.priest_iter()
-	local s,i = ''
-	local mages_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetMages())
-	s = s .. '/rw MAGE BUFFS\n'
-	for i, groups in pairs(mages_groups) do
-		local mage = mi()
-		s = s .. '/rw ' .. mage.name .. ' groups '
-		for j, group in pairs(groups) do
-			s = s .. group .. ', '
-		end
-		s = string.sub(s, 0, #s - 2)
-		s = s .. '\n'
-	end
-	i = ZRA.GetMakeMacro("ZMageBuffs")
-	ZRA.MacroSetBody(i, s)
-
-	s = ''
-	local priest_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetPriests())
-	s = s .. '/rw PRIEST BUFFS\n'
-	for i, groups in pairs(priest_groups) do
-		local priest = pi()
-		s = s .. '/rw ' .. priest.name .. ' groups '
-		for j, group in pairs(groups) do
-			s = s .. group .. ', '
-		end
-		s = string.sub(s, 0, #s - 2)
-		s = s .. '\n'
-	end
-	i = ZRA.GetMakeMacro("ZPriestBuffs")
-	ZRA.MacroSetBody(i, s)
-
-	s = ''
-	local druids_groups = ZRA.GroupDistribute(numgroups, #ZRA.GetDruids())
-	s = s .. '/rw DRUID BUFFS\n'
-	for i, groups in pairs(druids_groups) do
-		local druid = di()
-		s = s .. '/rw ' .. druid.name .. ' groups '
-		for j, group in pairs(groups) do
-			s = s .. group .. ', '
-		end
-		s = string.sub(s, 0, #s - 2)
-		s = s .. '\n'
-	end
-	i = ZRA.GetMakeMacro("ZDruidBuffs")
-	ZRA.MacroSetBody(i, s)
-end
 
 function ZRA.GetTanks()
 	return ZRA.shallowcopy(ZRA_vars.roles[1].columns[1].members)
@@ -701,50 +538,7 @@ function ZRA.PrintHelp()
 	print('\'i\' shows instances, \'wipe\' removes last zone out, test{1,2} for test raid, clear, dontgray, debug')
 end
 
-function ZRA.dump(o)
-	if type(o) == 'table' then
-		 local s = '{ '
-		 for k,v in pairs(o) do
-				if type(k) ~= 'number' then k = '"'..k..'"' end
-				s = s .. '['..k..'] = ' .. ZRA.dump(v) .. ','
-		 end
-		 return s .. '} '
-	else
-		 return tostring(o)
-	end
-end
 
-function ZRA.shallowcopy(orig)
-	local orig_type = type(orig)
-	local copy
-	if orig_type == 'table' then
-			copy = {}
-			for orig_key, orig_value in pairs(orig) do
-					copy[orig_key] = orig_value
-			end
-	else -- number, string, boolean, etc
-			copy = orig
-	end
-	return copy
-end
-
-function ZRA.modulo(a,b)
-	return a - math.floor(a/b)*b
-end
-
-function ZRA.tablelen(t)
-	local numItems = 0
-	for k,v in pairs(t) do
-		numItems = numItems + 1
-	end
-	return numItems
-end
-
-function ZRA.tablefirstkey(t)
-	for k,v in pairs(t) do
-		return(k)
-	end
-end
 
 function ZRA.splitmess(mess_arr, sep, lencap)
 	local lines = {}
@@ -762,45 +556,6 @@ function ZRA.splitmess(mess_arr, sep, lencap)
 		table.insert(lines, current_line)
 	end
 	return lines
-end
-
-function ZRA.remaining(it)
-	local temp = {}
-	for item in it do
-		table.insert(temp,item)
-	end
-	return temp
-end
-
-function ZRA.mysplit (inputstr, sep)
-	local t={}
-	local p = ''
-	for i = 1, string.len(inputstr) do
-		local letter = string.sub(inputstr, i, i)
-		if letter == sep then
-			table.insert(t, p)
-			p = ''
-		else
-			p = p .. letter
-		end
-	end
-	return t
-end
-
-function ZRA.dicestring(str)
-	local t = {}
-	for i = 1, string.len(str) do
-		table.insert(t, string.sub(str, i, i))
-	end
-	return t
-end
-
-function ZRA.codesToValsArr(codes, hash, key)
-	local vals = {}
-	for _,v in ipairs(codes) do
-		table.insert(vals, hash[v][key])
-	end
-	return vals
 end
 
 ZRA.scriptframe = CreateFrame("Frame", 'ZRAFrame')

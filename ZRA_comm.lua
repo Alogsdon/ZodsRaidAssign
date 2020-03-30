@@ -11,7 +11,7 @@ end
 
 function ZRA.CommOnEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 
-	elseif event == "CHAT_MSG_ADDON" then
+	if event == "CHAT_MSG_ADDON" then
 		if arg1 == "ZRA" then
 			local sender = string.gmatch(arg4,'(%w+)-')() or arg4
 			if sender == UnitName("player") then
@@ -258,6 +258,16 @@ function ZRA.Greet()
 	ZRA.raidsAssignsVersion = nil
 	C_ChatInfo.SendAddonMessage("ZRA", "hello", 'RAID')
 end
+
+
+--hook send_boss_assigns after assignments modified
+local old_zra_modified = ZRA.assignmentsModified; 
+function ZRA.assignmentsModified(...)
+	old_zra_modified(...)
+	local raid, boss, initiator = ...
+	ZRA.sendBossAssigns(raidName, bossIndex, dest)
+end
+
 
 function ZRA.sendBossAssigns(raidName, bossIndex, dest)
 	if not bossIndex then bossIndex = 0 end

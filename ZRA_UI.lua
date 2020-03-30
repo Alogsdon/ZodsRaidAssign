@@ -272,10 +272,12 @@ function ZRA.onLoadUI()
 		if ZRA.current_tab == "Roles" then
 			--print('generating assignments for ' .. ZRA.current_tab)
 			ZRA.funcs.Roles()
+			ZRA.assignmentsModified("Roles", 0, "self")
 			ZRA.sendBossAssigns("Roles")
 		else
 			--print('generating assignments for ' .. ZRA.current_tab .. ' ' .. ZRA.getDropdownName())
 			ZRA.funcs[ZRA.current_tab][ZRA.getDropdownName()]()
+			ZRA.assignmentsModified("Roles", 0, "self")
 			ZRA.sendBossAssigns(ZRA.current_tab, ZRA.getDropdownInd())
 		end
 		table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  ZRA.getDropdownName() or "_", diff = 'I auto filled'})
@@ -397,7 +399,7 @@ function ZRA.clickDropDown()
 				UIDropDownMenu_SetSelectedName(ZRAFightDropDown, arg.value)
 				UIDropDownMenu_SetText(ZRAFightDropDown, arg.value)
 				if ZRA.assignmentsAreBlank(ZRA.current_tab or "Roles", ZRA.getDropdownInd()) then
-					ZRAGenAssBtn:GetScript("OnClick")()
+					--ZRAGenAssBtn:GetScript("OnClick")()
 				end
 				ZRA.showBoss(ZRA.current_tab, ZRA.getDropdownInd())
 			end
