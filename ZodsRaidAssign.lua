@@ -5,6 +5,22 @@ function ZRA.onUpdate()
 
 end
 
+function ZRA.safecall(section_name, unsafe_func, recovery)
+	section_name = section_name or 'section_name'
+	recovery = recovery or (function()
+		print('Error in ' .. section_name .. ' resetting')
+		ZRA.reset()
+	end)
+	if ZRA.debugging then
+		unsafe_func() -- let it error
+	else
+		if pcall(unsafe_func) then
+		else
+			recovery()
+		end
+	end
+end
+
 function ZRA.assignmentsModified(raid, boss, initiator)
 	raid = raid or 'none'
 	boss = boss or 0
@@ -18,6 +34,10 @@ function ZRA.rosterModified(initiator)
 end
 
 function ZRA.onLoad()
+	if not ZRA_vars then
+		ZRA.wipeVars()
+	end
+
 	ZRA.CODES = {}
 	ZRA.LETTER_MAP = {}
 	ZRA.CLASS_MAP = {
@@ -46,12 +66,10 @@ function ZRA.onLoad()
 		table.insert(ZRA.CODES, string.sub(str, i, i))
 		ZRA.LETTER_MAP[string.sub(str, i, i)] = i
 	end
-	if not ZRA_vars then
-		ZRA.wipeVars()
-	end
 
 	ZRA.assignUpdateHistory = {}
 	ZRA.checkSavedVars()
+	--error('duiuuude')
 end
 
 
@@ -141,10 +159,14 @@ end
 
 function ZRA.onEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 	if (event == "ADDON_LOADED" and arg1 == "ZodsRaidAssign") then
+		if not ZRA_vars then ZRA_vars = {} end
+		if ZRA_vars.debugging then ZRA.debugging = ZRA_vars.debugging end
+		ZRA.safecall('onload', ZRA.onLoad, function()
+			print('Error loading, resetting vars and trying again')
+			ZRA.reset()
+			ZRA.onLoad()
+		end)
 		
-		ZRA.onLoad()
-		ZRA.onLoadUI()
-		ZRA.onLoadComms()
 		ZRA.cleanupEvents()
 	elseif event == 'PLAYER_ENTERING_WORLD' or event == 'PLAYER_LEAVING_WORLD' then
 		--unhandled onEvent
@@ -392,6 +414,7 @@ end
 function ZRA.loadMembers()
 	--adds current group members to roster
 	local num_before = ZRA.tablelen(ZRA_vars.roster)
+	local roooster = ZRA_vars.roster
 	local reverse_ind = {}
 	for k,v in pairs(ZRA_vars.roster) do
 		reverse_ind[v.name] = k
@@ -430,7 +453,11 @@ end
 function ZRA.updateRaidNums()
 	local reverse_ind = {}
 	for k,v in pairs(ZRA_vars.roster) do
-		reverse_ind[v.name] = k
+		if v.name then
+			reverse_ind[v.name] = k
+		else
+			ZRA_vars.roster[k] = nil -- remove
+		end
 	end
 	for k,v in pairs(ZRA_vars.roster) do
 		v.raidNum = 0
@@ -473,8 +500,9 @@ SlashCmdList["ZRAIDASSIGN"] = function(msg)
 		ZRA.reset()
 		print('cleared')
 	elseif (command == 'debug') then
-		ZRA.debugging = true
-		print('debugging')
+		ZRA.debugging = (not ZRA.debugging)
+		ZRA_vars.debugging = ZRA.debugging
+		print('debugging ' .. tostring(ZRA.debugging))
 	elseif (command == 'dontgray') then
 		ZRA.dontgray = true
 		print('gray off')
@@ -494,6 +522,8 @@ SlashCmdList["ZRAIDASSIGN"] = function(msg)
 		print('using test roster 2')
 	elseif (command == 'state') then
 		print(ZRA.state)
+		print(ZRA.dump(ZRA.unhandled_msgs))
+		print(ZRA.dump(ZRA.backlogged_msgs))
 	elseif (command == 'save') then
 		if arg1 then 
 			print('saving ' .. arg1)
