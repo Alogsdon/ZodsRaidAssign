@@ -1,7 +1,7 @@
 
 local addonName, ZRA = ...
 
-ZRA.schema_version = 1.0
+
 --ZRA_vars.roles 
 ZRA.roleschema = {
     {

@@ -65,7 +65,6 @@ function ZRA.refreshUI()
 
 	ZRAGenAssBtn:Show()
 	ZRAdrop_mems_btn:Show()
-	ZRAload_mems_btn:Show()
 	ZRAscrollbox:Hide()
 	if ZRA.current_tab == "Roles" then
 		ZRApost_ass_btn:Hide()
@@ -73,7 +72,6 @@ function ZRA.refreshUI()
 		ZRApost_ass_btn:Hide()
 		ZRAGenAssBtn:Hide()
 		ZRAdrop_mems_btn:Hide()
-		ZRAload_mems_btn:Hide()
 		ZRAscrollbox:Show()
 	else
 		ZRApost_ass_btn:Show()
@@ -286,49 +284,29 @@ function ZRA.onLoadUI()
 	ZRApost_ass_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "TOPLEFT", 14 + 130, -14)
 	ZRApost_ass_btn:SetWidth(120)
 	ZRApost_ass_btn:SetHeight(30)
-	ZRApost_ass_btn:SetScript("OnClick", function()
-		--print('posting ' .. UIDropDownMenu_GetSelectedName(ZRA.dropdown) .. ' assignments to raid')
-		local phrases = ZRA.announcements[ZRA.current_tab][UIDropDownMenu_GetSelectedName(ZRA.dropdown)](ZRA.raid_data)
-		if UnitInRaid("player") and (UnitIsGroupAssistant("player") or UnitIsGroupLeader("player")) then
-			for _, line in ipairs(phrases or {}) do
-				SendChatMessage(line ,"RAID_WARNING" )
-			end
-		elseif UnitInRaid("player") then
-			for _, line in ipairs(phrases or {}) do
-				SendChatMessage(line ,"RAID" )
-			end
-		else
-			for _, line in ipairs(phrases or {}) do
-				print(line )
-			end
-		end
-		
-	end)
+	ZRApost_ass_btn:SetScript("OnClick", ZRA.postAssignments)
 	ZRApost_ass_btn:Show()
+
 
 	--load members
 	local load_mems_btn = CreateFrame("Button",'ZRAload_mems_btn', ZRALayoutFrame, "UIPanelButtonTemplate")
 	load_mems_btn:SetText("Populate")
-	load_mems_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "BOTTOMLEFT", 14 , 50)
+	load_mems_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "BOTTOMLEFT", 14 , 90)
 	load_mems_btn:SetWidth(67)
 	load_mems_btn:SetHeight(30)
 	load_mems_btn:SetScript("OnClick", function()
 		ZRA.loadMembers()
-		ZRA.updateRosterUI()
-		ZRA.refreshUI()
 	end)
-	load_mems_btn:Show()
+	load_mems_btn:Hide() --hiding out for now, should get removed
 
 	--drop members
 	local drop_mems_btn = CreateFrame("Button",'ZRAdrop_mems_btn', ZRALayoutFrame, "UIPanelButtonTemplate")
 	drop_mems_btn:SetText("Drop")
-	drop_mems_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "BOTTOMLEFT", 14 , 90)
+	drop_mems_btn:SetPoint("TOPLEFT", ZRALayoutFrame, "BOTTOMLEFT", 14 , 50)
 	drop_mems_btn:SetWidth(67)
 	drop_mems_btn:SetHeight(30)
 	drop_mems_btn:SetScript("OnClick", function()
 		ZRA.dropExternalMembers()
-		ZRA.updateRosterUI()
-		ZRA.refreshUI()
 	end)
 	drop_mems_btn:Show()
 
@@ -369,9 +347,45 @@ function ZRA.onLoadUI()
 	ZRA.showRoles()
 	f:Hide()
 
+	
+
 	ZRA.updateRosterUI()
 end
 
+StaticPopupDialogs["ZRA_error_posting"] = {
+	text = "Error in Assignments",
+	button1 = "Post anyway",
+	button2 = "Go back",
+	OnAccept = function()
+	end,
+	OnCancel = function()
+	end,
+	timeout = 30,
+	hideOnEscape = true,
+} -- TODO
+
+function ZRA.postAssignments()
+	local phrases = ZRA.announcements[ZRA.current_tab][UIDropDownMenu_GetSelectedName(ZRA.dropdown)](ZRA.raid_data)
+	if UnitInRaid("player") and (UnitIsGroupAssistant("player") or UnitIsGroupLeader("player")) then
+		for _, line in ipairs(phrases or {}) do
+			SendChatMessage(line ,"RAID_WARNING" )
+		end
+	elseif UnitInRaid("player") then
+		for _, line in ipairs(phrases or {}) do
+			SendChatMessage(line ,"RAID" )
+		end
+	else
+		for _, line in ipairs(phrases or {}) do
+			print(line )
+		end
+	end
+end
+
+local old_ZRA_on_load = ZRA.onLoad
+function ZRA.onLoad(...)
+	old_ZRA_on_load(...)
+	ZRA.onLoadUI(...)
+end
 
 local old_zra_roster_modified = ZRA.rosterModified
 function ZRA.rosterModified(...)
@@ -497,7 +511,7 @@ function ZRA.freeFrames(frames)
 end
 
 function ZRA.catchAsignee(catcher, player)
-	if pcall(function()
+	ZRA.safecall('UI catch asignee', function()
 		local code = ZRA.getCodeFromName(player.name)
 		local setZRA = ZRA.setRaidAssignment
 		for i,v in pairs(catcher.dataRef.members) do
@@ -510,11 +524,7 @@ function ZRA.catchAsignee(catcher, player)
 		setZRA(ZRA.current_tab, ZRA.getDropdownInd(), catcher.groupind, catcher.column , updatedMembers, 'self')
 		ZRA.showAsignee(catcher, player, catcher.hover_ind )
 		table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'assigned ' .. player.name})
-	end) then 
-	else
-		print('ZRA had an error in the UI, resetting')
-		ZRA.reset()
-	end
+	end)
 end
 
 function ZRA.showAsignee(catcher, player, where)
@@ -567,7 +577,7 @@ function ZRA.playerColor(player)
 end
 
 function ZRA.UIDropAsignee(columnframe, player)
-	if pcall(function()
+	ZRA.safecall('UI drop asignee', function()
 		local playerCode = ZRA.getCodeFromName(player.name)
 		ZRA.dropAsignee(playerCode, ZRA.current_tab, ZRA.getDropdownInd(), columnframe.groupind, columnframe.column, 'self')
 		for i,v in ipairs(columnframe.members) do
@@ -577,11 +587,7 @@ function ZRA.UIDropAsignee(columnframe, player)
 			end
 		end
 		table.insert(ZRA.assignUpdateHistory, {update_type = 'self', raid = ZRA.current_tab, boss =  UIDropDownMenu_GetSelectedName(ZRA.dropdown) or "_", diff = 'removed ' .. player.name})
-	end) then --good
-	else
-		print('ZRA had an error in the UI module, resetting')
-		ZRA.reset()
-	end
+	end)
 end
 
 function ZRA.mouseOverEnter(player)
@@ -723,7 +729,7 @@ function ZRA.getMouseFrame(frames)
 end
 
 function ZRA.pickUpPlayer(copying_frame, player)
-	if pcall(function()
+	ZRA.safecall('UI pickup player', function()
 		ZDragframe:SetPoint("TOPLEFT", copying_frame, "TOPLEFT")
 		ZDragframe:SetPoint("BOTTOMRIGHT", copying_frame, "TOPLEFT", ZRA.PLAYER_SIZE, -ZRA.PLAYER_SIZE)
 		--ZDragframe:SetHeight(ZRA.PLAYER_SIZE)
@@ -734,11 +740,7 @@ function ZRA.pickUpPlayer(copying_frame, player)
 		ZDragframe:Show()
 		ZDragframe:StartMoving()
 		ZDragframe.player = player
-	end) then --good
-	else
-		print('ZRA had an error in the UI module, resetting')
-		ZRA.reset()
-	end
+	end)
 end
 
 
@@ -826,7 +828,10 @@ function ZRA.reset(...)
 end
 
 function ZRA.UIReset()
-	ZRALayoutFrame:Hide()
+	local z = ZRALZRALayoutFrame
+	if z then
+		z:Hide()
+	end
 end
 
 
@@ -842,6 +847,7 @@ function ZRA.OpenMenu()
 		ZRA.tabClicked("Roles")()
 	end
 	ZRALayoutFrame:Show()
+	ZRA.loadMembers()
 	ZRA.refreshUI()
 end
 

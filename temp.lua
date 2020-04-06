@@ -12,8 +12,8 @@ local function postHook(typeID, index, ...) -- (2)
  lastCompanionType, lastCompanionIndex = typeID, index; -- (3)
  return ...; -- (4)
 end
-local oldPickupCompanion = PickupCompanion; -- (5)
-function PickupCompanion(...) -- (6)
- local typeID, index = ...; -- (7)
- return postHook(typeID, index, oldPickupCompanion(typeID, index, ...)); --(8)
+local oldPickupCompanion = PickupCompanion;
+function PickupCompanion(...)
+ local typeID, index = ...; 
+ return postHook(typeID, index, oldPickupCompanion(typeID, index, ...)); 
 end

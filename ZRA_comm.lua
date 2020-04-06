@@ -14,8 +14,14 @@ function ZRA.onLoadComms()
 		ZRA.backlogged_msgs = {}
 end
 
+local old_ZRA_on_load = ZRA.onLoad
+function ZRA.onLoad(...)
+	old_ZRA_on_load(...)
+	ZRA.onLoadComms(...)
+end
+
 function ZRA.CommOnEvent(frame, event, arg1, arg2, arg3, arg4, ...)
-	if pcall (function()
+	ZRA.safecall('comm-on-event', function()
 		if event == "CHAT_MSG_ADDON" then
 			if arg1 == "ZRA" then
 				local sender = string.gmatch(arg4,'(%w+)-')() or arg4
@@ -28,23 +34,10 @@ function ZRA.CommOnEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 			ZRA.setState(ZRA.STATES.FRESH)
 		elseif event == "GROUP_ROSTER_UPDATE" then
 			ZRA.loadMembers()
-			ZRA.reGreet()
-		elseif event == 'PLAYER_ENTERING_WORLD' or event == 'PLAYER_LEAVING_WORLD' then
-			--unhandled onEvent
-			local events = ZRA_vars.events or {}
-			ZRA_vars.events = events
-			local iname, instanceType, _, _, _, _, _, instanceID = GetInstanceInfo()
-			if #events==0 or (not (instanceType == events[#events].inst_type)) then
-				table.insert(events, {event = event, time = GetTime(), instance = iname, inst_type = instanceType, id = instanceID})
-			else
-			end
+			--make sure we get teh same new roster
 		else
 		end
-	end) then --good
-	else
-		print('ZRA had an error in the comm module, resetting')
-		ZRA.reset()
-	end
+	end) 
 end
 
 function ZRA.sendAddonMessage(mess, channel, dest)
@@ -52,10 +45,9 @@ function ZRA.sendAddonMessage(mess, channel, dest)
 end
 
 function ZRA.CommOnUpdate()
-	if pcall (function()
+	ZRA.safecall('comm-on-update', function()
 		if ZRA.requestSent then
 			if GetTime() - ZRA.requestSent.t > ZRA.default_request_wait then
-				print((GetTime() - ZRA.requestSent.t))
 				ZRA.requestTimeout()
 			end
 		end
@@ -66,7 +58,7 @@ function ZRA.CommOnUpdate()
 			while #ZRA.unhandled_msgs > 0 do
 				local msg = table.remove(ZRA.unhandled_msgs, 1)
 				if msg.task == 'hi' then
-					ZRA.askForRoster(msg.sender)
+					table.insert(ZRA.reponders, {sender = msg.sender, prio = string.sub(msg.mess,1,5)})
 				else
 					table.insert(ZRA.backlogged_msgs, msg)
 				end
@@ -77,6 +69,8 @@ function ZRA.CommOnUpdate()
 				local msg = table.remove(ZRA.unhandled_msgs, 1)
 				if msg.task == 'hi' then
 					--make sure roster is the same, something is wrong if not. discard
+				elseif msg.task == 'he' then
+					ZRA.reGreet()
 				else
 					table.insert(ZRA.backlogged_msgs, msg)
 				end
@@ -84,11 +78,7 @@ function ZRA.CommOnUpdate()
 		elseif ZRA.state == ZRA.STATES.ASKED then
 		elseif ZRA.state == ZRA.STATES.GETTING_ASSIGNS then
 		end
-	end) then --good
-	else
-		print('ZRA had an error in the comm module, resetting')
-		ZRA.reset()
-	end
+	end)
 end
 
 ZRA.state = 0
@@ -103,12 +93,17 @@ ZRA.STATES = {
     COLLECTING_ROSTERS = 7
 }
 function ZRA.setState(state)
-	if state == ZRA.STATES.GOOD then
-
-	end
+	ZRA.refresh_messages()
 	ZRA.state = state
 end
 
+function ZRA.refresh_messages()
+	ZRA.backlogged_msgs = {}
+	for i,v in ipairs(ZRA.backlogged_msgs) do
+		table.insert(ZRA.unhandled_msgs, v)
+	end
+	ZRA.backlogged_msgs = {}
+end
 
 function ZRA.setRosterFromMess(mess)
 	for entry in string.gmatch(mess, '([^,]+)') do
@@ -138,19 +133,23 @@ end
 
 function ZRA.askForRoster(reciept)
 	local request = {t = GetTime(), item = 'rosterPayload', askee = guy_to_ask}
-	if ZRA.requestSent then
-		table.insert(ZRA.request_queue, request)
-	else
-		ZRA.requestSent = request
-		C_ChatInfo.SendAddonMessage("ZRA", "rr", 'WHISPER', reciept)
-	end
+	ZRA.requestSent = request
+	ZRA.sendAddonMessage("rr", 'WHISPER',reciept)
+	ZRA.setState(ZRA.STATES.GETTING_ROSTER)
+
 end
 
 function ZRA.requestTimeout()
 	local request = ZRA.requestSent
 	ZRA.requestSent = nil
 	if request.item == 'greet' then
-		ZRA.useMyRoster()
+		if #ZRA.reponders > 0 then
+			table.sort(ZRA.reponders, function(a,b) return a.prio < b.prio end)
+			print(ZRA.dump((ZRA.reponders)))
+			ZRA.askForRoster(ZRA.reponders[1].sender)
+		else
+			ZRA.useMyRoster()
+		end
 	elseif request.item == 'rosterPayload' then
 		ZRA.otherUsers[request.askee] = nil
 		ZRA.askForRosterPayload()
@@ -168,14 +167,6 @@ function ZRA.useMyRoster()
 	ZRA.raidsRosterVersion = ZRA.rosterVersion()
 	ZRA.raidsAssignsVersion = ZRA.raidAssignsVersion()
 	ZRA.setState(ZRA.STATES.GOOD)
-end
-
-
-function ZRA.sendRequestFromQueue()
-	local request = table.remove(ZRA.request_queue, 1)
-	if request.item == 'rosterPayload' then
-		ZRA.askForRosterPayload()
-	end
 end
 
 
@@ -309,14 +300,15 @@ function ZRA.HandleRemoteData(mess, channel, sender)
 end
 
 function ZRA.reGreet()
-	ZRA.otherUsers = {}
+	local prio = string.sub(string.format("%.4f",math.random()),3)
 	if ZRA.raidsRosterVersion and ZRA.raidsAssignsVersion then
-		ZRA.sendAddonMessage("hi"..ZRA.raidsRosterVersion..ZRA.raidsAssignsVersion, 'RAID')
+		ZRA.sendAddonMessage("hi".. prio .." " ..ZRA.raidsRosterVersion.. " "..ZRA.raidsAssignsVersion, 'RAID')
 	end
 end
 
 function ZRA.Greet()
 	ZRA.requestSent = {t = GetTime(), item = 'greet'}
+	ZRA.reponders = {}
 	ZRA.raidsRosterVersion = nil
 	ZRA.raidsAssignsVersion = nil
 	ZRA.setState(ZRA.STATES.GREETED)
@@ -336,7 +328,6 @@ end
 
 
 function ZRA.sendBossAssigns(raidName, bossIndex, dest)
-	error('yo dude')
 	if not bossIndex then bossIndex = 0 end
 	local bossAssigns
 	if bossIndex == -1 then
