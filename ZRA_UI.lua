@@ -370,7 +370,7 @@ function ZRA.postAssignments()
 		for _, line in ipairs(phrases or {}) do
 			SendChatMessage(line ,"RAID_WARNING" )
 		end
-	elseif aitInRaid("player") then
+	elseif UnitInRaid("player") then
 		for _, line in ipairs(phrases or {}) do
 			SendChatMessage(line ,"RAID" )
 		end
