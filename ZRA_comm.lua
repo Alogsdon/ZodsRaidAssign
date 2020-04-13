@@ -151,7 +151,6 @@ function ZRA.requestTimeout()
 			ZRA.useMyRoster()
 		end
 	elseif request.item == 'rosterPayload' then
-		ZRA.otherUsers[request.askee] = nil
 		ZRA.askForRosterPayload()
 	elseif request.item == 'bossAssigns' then
 		ZRA.otherUsers[request.askee] = nil

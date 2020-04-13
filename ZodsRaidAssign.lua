@@ -11,7 +11,7 @@ function ZRA.safecall(section_name, unsafe_func, recovery)
 		print('Error in ' .. section_name .. ' resetting')
 		ZRA.reset()
 	end)
-	if ZRA.debugging then
+	if ZRA.debugging or true then
 		unsafe_func() -- let it error
 	else
 		if pcall(unsafe_func) then
@@ -37,6 +37,7 @@ function ZRA.onLoad()
 	if not ZRA_vars then
 		ZRA.wipeVars()
 	end
+	ZRA.checkSavedVars()
 
 	ZRA.CODES = {}
 	ZRA.LETTER_MAP = {}
@@ -68,7 +69,7 @@ function ZRA.onLoad()
 	end
 
 	ZRA.assignUpdateHistory = {}
-	ZRA.checkSavedVars()
+	
 	--error('duiuuude')
 end
 
@@ -288,14 +289,14 @@ end
 ZRA.ROSTER_SOFT_CAP = 46
 --codes for player UID, to make pickling easier
 function ZRA.getUnusedCode()
+	if ZRA.tablelen(ZRA_vars.roster) > ZRA.ROSTER_SOFT_CAP then
+		ZRA.updateRaidNums()
+		ZRA.tryDropExternals()
+	end
 	for i,v in ipairs(ZRA.CODES) do
 		if ZRA_vars.roster[v] == nil then
 			return v
 		end
-	end
-	if ZRA.tablelen(ZRA_vars.roster) > ZRA.ROSTER_SOFT_CAP then
-		ZRA.updateRaidNums()
-		ZRA.tryDropExternals()
 	end
 	error("out of player codes")
 end
