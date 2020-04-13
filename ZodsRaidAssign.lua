@@ -8,7 +8,7 @@ end
 function ZRA.safecall(section_name, unsafe_func, recovery)
 	section_name = section_name or 'section_name'
 	recovery = recovery or (function()
-		print('Error in ' .. section_name .. ' resetting')
+		ZRA.d('Error in ' .. section_name .. ' resetting')
 		ZRA.reset()
 	end)
 	if ZRA.debugging or true then
@@ -25,12 +25,19 @@ function ZRA.assignmentsModified(raid, boss, initiator)
 	raid = raid or 'none'
 	boss = boss or 0
 	--just a function to hook into
-	print('assignments modified by ' .. initiator .. " raid: " .. raid .. " boss: " .. boss)
+	ZRA.d('assignments modified by ' .. initiator .. " raid: " .. raid .. " boss: " .. boss)
 end
 
 function ZRA.rosterModified(initiator)
-	print('roster modified by ' .. initiator)
+	ZRA.d('roster modified by ' .. initiator)
 	--hook into
+end
+
+function ZRA.d(msg)
+	if ZRA.debugging then
+		print(msg)
+	else
+	end
 end
 
 function ZRA.onLoad()
@@ -163,7 +170,7 @@ function ZRA.onEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 		if not ZRA_vars then ZRA_vars = {} end
 		if ZRA_vars.debugging then ZRA.debugging = ZRA_vars.debugging end
 		ZRA.safecall('onload', ZRA.onLoad, function()
-			print('Error loading, resetting vars and trying again')
+			ZRA.d('Error loading, resetting vars and trying again')
 			ZRA.reset()
 			ZRA.onLoad()
 		end)
@@ -302,12 +309,17 @@ function ZRA.getUnusedCode()
 end
 
 function ZRA.tryDropExternals()
+	local num_before = ZRA.tablelen(ZRA_vars.roster)
 	for k,v in pairs(ZRA_vars.roster) do
 		if v.raidNum == 0 then
 			if ZRA.countPlayerAssigns(k) == 0 then
 				ZRA_vars.roster[k] = nil
 			end
 		end
+	end
+	local num_after = ZRA.tablelen(ZRA_vars.roster)
+	if num_after > num_before then
+		ZRA.rosterModified('self')
 	end
 end
 
@@ -488,6 +500,7 @@ function ZRA.reset()
 	ZRA_vars.raids = ZRA.deepcopy(ZRA.raidschema)
 	ZRA_vars.roles = ZRA.deepcopy(ZRA.roleschema)
 	ZRA_vars.roster = {}
+	ZRA.loadMembers()
 	ZRA.rosterModified('self')
 end
 

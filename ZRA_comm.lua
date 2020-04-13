@@ -2,7 +2,7 @@ local addonName, ZRA = ...
 
 ZRA.com_version = "2"
 
-ZRA.default_request_wait = 4
+ZRA.DEFAULT_WAIT_REQUEST = 4
 
 function ZRA.onLoadComms()
 		C_ChatInfo.RegisterAddonMessagePrefix("ZRA")
@@ -40,45 +40,39 @@ function ZRA.CommOnEvent(frame, event, arg1, arg2, arg3, arg4, ...)
 	end) 
 end
 
-function ZRA.sendAddonMessage(mess, channel, dest)
-	C_ChatInfo.SendAddonMessage("ZRA", ZRA.com_version .. mess , channel, dest)
-end
-
 function ZRA.CommOnUpdate()
 	ZRA.safecall('comm-on-update', function()
-		if ZRA.requestSent then
-			if GetTime() - ZRA.requestSent.t > ZRA.default_request_wait then
+		if ZRA.currentRequest then
+			if GetTime() - ZRA.currentRequest.t > ZRA.current_wait_time then
 				ZRA.requestTimeout()
 			end
 		end
 
+		ZRA.handleMessageQueue()
+
 		if ZRA.state == ZRA.STATES.FRESH then
 			ZRA.Greet()
 		elseif ZRA.state == ZRA.STATES.GREETED then
-			while #ZRA.unhandled_msgs > 0 do
-				local msg = table.remove(ZRA.unhandled_msgs, 1)
-				if msg.task == 'hi' then
-					table.insert(ZRA.reponders, {sender = msg.sender, prio = string.sub(msg.mess,1,5)})
-				else
-					table.insert(ZRA.backlogged_msgs, msg)
-				end
-			end
 		elseif ZRA.state == ZRA.STATES.GETTING_ROSTER then
 		elseif ZRA.state == ZRA.STATES.GOOD then
-			while #ZRA.unhandled_msgs > 0 do
-				local msg = table.remove(ZRA.unhandled_msgs, 1)
-				if msg.task == 'hi' then
-					--make sure roster is the same, something is wrong if not. discard
-				elseif msg.task == 'he' then
-					ZRA.reGreet()
-				else
-					table.insert(ZRA.backlogged_msgs, msg)
-				end
-			end
 		elseif ZRA.state == ZRA.STATES.ASKED then
 		elseif ZRA.state == ZRA.STATES.GETTING_ASSIGNS then
 		end
 	end)
+end
+
+function ZRA.handleMessageQueue()
+	while #ZRA.unhandled_msgs > 0 do
+		local msg = table.remove(ZRA.unhandled_msgs, 1)
+		local f = ZRA.STATE_MSG_RESPONSES[ZRA.state][msg.task]
+		if f then
+			ZRA.d('handling: ' .. ZRA.dump(msg))
+			f(msg)
+		else
+			ZRA.d('backlogging: ' .. ZRA.dump(msg))
+			table.insert(ZRA.backlogged_msgs, msg)
+		end
+	end
 end
 
 ZRA.state = 0
@@ -92,9 +86,54 @@ ZRA.STATES = {
     GETTING_ASSIGNS = 6,
     COLLECTING_ROSTERS = 7
 }
+
+ZRA.STATE_MSG_RESPONSES = {
+	[ZRA.STATES.UNKNOWN] = {},
+    [ZRA.STATES.FRESH] = {},
+    [ZRA.STATES.GREETED] = {
+		['hi'] = function(msg)
+			table.insert(ZRA.reponders, {sender = msg.sender, prio = string.sub(msg.mess,1,5), roster_v = string.sub(msg.mess,6,9)})
+			ZRA.setTimeout(1)
+		end
+	},
+    [ZRA.STATES.GETTING_ROSTER] = {
+		['sr'] = function(msg)
+			ZRA.setRosterFromMess(msg)
+		end
+	},
+    [ZRA.STATES.GOOD] = {
+		['hi'] = function()
+			--make sure roster is the same, something is wrong if not. discard
+		end,
+		['he'] = function()
+			ZRA.reGreet()
+		end,
+		['rr'] = function(msg)
+			ZRA.sendRosterData(msg.sender)
+		end,
+		['bu'] = function(msg)
+			ZRA.hearBossAssigns(msg)
+		end
+	},
+    [ZRA.STATES.ASKED] = {},
+    [ZRA.STATES.GETTING_ASSIGNS] = {},
+    [ZRA.STATES.COLLECTING_ROSTERS] = {}
+}
+
+
+
+
 function ZRA.setState(state)
+	ZRA.d('new state: ' .. state)
 	ZRA.refresh_messages()
 	ZRA.state = state
+end
+
+function ZRA.cancelRequest()
+	if ZRA.currentRequest then
+		print('canceling current request')
+		ZRA.currentRequest = nil
+	end
 end
 
 function ZRA.refresh_messages()
@@ -105,9 +144,12 @@ function ZRA.refresh_messages()
 	ZRA.backlogged_msgs = {}
 end
 
-function ZRA.setRosterFromMess(mess)
-	for entry in string.gmatch(mess, '([^,]+)') do
-		if string.len(entry) <= 3 then
+function ZRA.setRosterFromMess(msg)
+	local saw_end = false
+	for entry in string.gmatch(msg.mess, '([^,]+)') do
+		if string.sub(entry,1,1) == '~' then
+			saw_end = true
+		elseif string.len(entry) <= 3 then
 			local rnum = tonumber(string.sub(entry,2))
 			local name, _, _, _, _, class = GetRaidRosterInfo(rnum)
 			local dude = {
@@ -115,7 +157,7 @@ function ZRA.setRosterFromMess(mess)
 				name = name,
 				raidNum = rnum,
 			}
-			ZRA_vars.roster[string.sub(entry,1,1)] = dude
+			ZRA.temp_roster[string.sub(entry,1,1)] = dude
 		else
 			local rnum = 0
 			local name = string.sub(entry,2,-2)
@@ -125,33 +167,83 @@ function ZRA.setRosterFromMess(mess)
 				name = name,
 				raidNum = rnum,
 			}
-			ZRA_vars.roster[string.sub(entry,1,1)] = dude
+			ZRA.temp_roster[string.sub(entry,1,1)] = dude
 		end
 	end
-	ZRA.rosterModified('other')
+	if saw_end then
+		ZRA_vars.roster = ZRA.temp_roster
+		ZRA.temp_roster = nil
+		ZRA.rosterModified('other-'..msg.sender)
+		ZRA.checkRoster()
+		ZRA.cancelRequest()
+		ZRA.setState(ZRA.STATES.GOOD)
+	else
+		ZRA.setTimeout(2)
+	end
 end
 
-function ZRA.askForRoster(reciept)
-	local request = {t = GetTime(), item = 'rosterPayload', askee = guy_to_ask}
-	ZRA.requestSent = request
-	ZRA.sendAddonMessage("rr", 'WHISPER',reciept)
-	ZRA.setState(ZRA.STATES.GETTING_ROSTER)
+function ZRA.checkRoster()
+	local rv = ZRA.rosterVersion()
+	if ZRA.raidsRosterVersion == rv then
+		ZRA.d('roster checked out good')
+	else
+		error('roster didnt check out for some reason. target:' .. ZRA.dump(ZRA.raidsRosterVersion) .. ' mine:' .. ZRA.dump(rv) )
+	end
+end
 
+function ZRA.askForRoster(responder)
+	ZRA.raidsRosterVersion = tostring(responder.roster_v)
+	ZRA.d('target roster v = ' .. ZRA.raidsRosterVersion)
+	ZRA.temp_roster = {}
+	ZRA.sendRequest("roster", responder.sender)
+	ZRA.setState(ZRA.STATES.GETTING_ROSTER)
+end
+
+function ZRA.Greet()
+	ZRA.sendRequest("greet")
+	ZRA.setState(ZRA.STATES.GREETED)
+end
+
+function ZRA.sendRequest(item, askee, timeout)
+	ZRA.currentRequest = {t = GetTime(), item = item, askee = askee}
+	ZRA.setTimeout(timeout or ZRA.DEFAULT_WAIT_REQUEST)
+	
+	if item == "greet" then
+		ZRA.reponders = {}
+		ZRA.sendAddonMessage("he", 'RAID')
+	elseif item == "roster" then
+		ZRA.sendAddonMessage("rr", 'WHISPER', askee)
+	else
+		error('unkown request item')
+	end
+	
+end
+
+function ZRA.sendAddonMessage(mess, channel, dest)
+	C_ChatInfo.SendAddonMessage("ZRA", ZRA.com_version .. mess , channel, dest)
+end
+
+function ZRA.setTimeout(relative_time)
+	if ZRA.currentRequest then
+		ZRA.current_wait_time = GetTime() - ZRA.currentRequest.t + relative_time
+	else --shouldn't actually happen
+		ZRA.current_wait_time = relative_time
+	end
 end
 
 function ZRA.requestTimeout()
-	local request = ZRA.requestSent
-	ZRA.requestSent = nil
+	local request = ZRA.currentRequest
+	ZRA.currentRequest = nil
 	if request.item == 'greet' then
 		if #ZRA.reponders > 0 then
 			table.sort(ZRA.reponders, function(a,b) return a.prio < b.prio end)
-			print(ZRA.dump((ZRA.reponders)))
-			ZRA.askForRoster(ZRA.reponders[1].sender)
+			ZRA.d(ZRA.dump((ZRA.reponders)))
+			ZRA.askForRoster(ZRA.reponders[1])
 		else
 			ZRA.useMyRoster()
 		end
-	elseif request.item == 'rosterPayload' then
-		ZRA.askForRosterPayload()
+	elseif request.item == 'roster' then
+		ZRA.Greet()
 	elseif request.item == 'bossAssigns' then
 		ZRA.otherUsers[request.askee] = nil
 		ZRA.askForBossAssigns()
@@ -182,7 +274,8 @@ function ZRA.askForBossAssigns()
 end
 
 
-function ZRA.hearBossAssigns(mess, sender)
+function ZRA.hearBossAssigns(msg)
+	local mess, sender = msg.mess, msg.sender
 	local raidKey = ZRA.RAID_MAP_BACK[string.sub(mess,1,1)]
 	local bosskey = tonumber(string.sub(mess,2,3))
 	local bossName = nil
@@ -240,23 +333,24 @@ function ZRA.sendRosterData(dest)
 			table.insert(mess_arr,k .. v.name..ZRA.CLASS_MAP[v.class])
 		end
 	end
+	table.insert(mess_arr,'~')
 	local lines = ZRA.splitmess(mess_arr, ',', 220)
 	for i,v in ipairs(lines) do
-		C_ChatInfo.SendAddonMessage("ZRA", "sr" .. v, 'WHISPER', dest)
+		ZRA.sendAddonMessage("sr" .. v, 'WHISPER', dest)
 	end
 
-	ZRA.sendBossAssigns("Roles", nil, dest)
-	for raidName, raidData in pairs(ZRA_vars.raids) do
-		for bossIndex,bossAssigns in ipairs(raidData) do
-			ZRA.sendBossAssigns(raidName, bossIndex, dest)
-		end
-	end
+	--ZRA.sendBossAssigns("Roles", nil, dest)
+	--for raidName, raidData in pairs(ZRA_vars.raids) do
+	--	for bossIndex,bossAssigns in ipairs(raidData) do
+	--		ZRA.sendBossAssigns(raidName, bossIndex, dest)
+	--	end
+	--end
 	
 end
 
 function ZRA.HandleRemoteData_OLD(mess, channel, sender)
 	local task = string.sub(mess,0,2)
-	if ZRA.debugging then print('heard '.. sender .. '-'.. mess ) end
+	ZRA.d('heard '.. sender .. '-'.. mess )
 	if task == 'he' then
 		ZRA.reGreet()
 		ZRA.otherUsers[sender] = true
@@ -294,25 +388,16 @@ function ZRA.HandleRemoteData(mess, channel, sender)
 	if version ~= ZRA.com_version then return end
 	local task = string.sub(mess,2,3)
 	local rest = string.sub(mess, 4)
-	if ZRA.debugging then print('heard '.. sender .. '-'.. mess ) end
+	ZRA.d('heard '.. sender .. '-'.. mess )
 	table.insert(ZRA.unhandled_msgs, {task = task, mess = rest, sender = sender})
 end
 
 function ZRA.reGreet()
 	local prio = string.sub(string.format("%.4f",math.random()),3)
-	if ZRA.raidsRosterVersion and ZRA.raidsAssignsVersion then
-		ZRA.sendAddonMessage("hi".. prio .." " ..ZRA.raidsRosterVersion.. " "..ZRA.raidsAssignsVersion, 'RAID')
-	end
+	ZRA.sendAddonMessage("hi".. prio .." " ..ZRA.rosterVersion(), 'RAID')
 end
 
-function ZRA.Greet()
-	ZRA.requestSent = {t = GetTime(), item = 'greet'}
-	ZRA.reponders = {}
-	ZRA.raidsRosterVersion = nil
-	ZRA.raidsAssignsVersion = nil
-	ZRA.setState(ZRA.STATES.GREETED)
-	ZRA.sendAddonMessage("he", 'RAID')
-end
+
 
 
 --hook send_boss_assigns after assignments modified
@@ -357,8 +442,8 @@ end
 
 
 hooksecurefunc(C_ChatInfo,"SendAddonMessage",function(arg1,arg2,arg3,arg4,...)
-	if arg1 == "ZRA" and ZRA.debugging then
-		print("ME->" .. arg3 .. (arg4 or '') ..": " .. arg2)
+	if arg1 == "ZRA" then
+		ZRA.d("ME->" .. arg3 .. (arg4 or '') ..": " .. arg2)
 	end
 end)
 
@@ -372,7 +457,7 @@ function ZRA.commReset()
 	ZRA.setState(ZRA.STATES.FRESH)
 	ZRA.unhandled_msgs = {}
 	ZRA.backlogged_msgs = {}
-	ZRA.requestSent = nil
+	ZRA.currentRequest = nil
 end
 
 

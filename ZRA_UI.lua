@@ -61,7 +61,6 @@ function ZRA.refreshUI()
 		ZRA.raid_data = ZRA_vars.raids[raid][ind]
 	end
 
-	--print("update ui " .. (ZRA.current_tab or "no tab set"))
 
 	ZRAGenAssBtn:Show()
 	ZRAdrop_mems_btn:Show()
@@ -139,7 +138,7 @@ function ZRA.refreshUI()
 		elseif v.update_type == 'self' then
 			s = '\n' .. 'from: ME ' .. " r:" .. v.raid .. " b:" .. v.boss .. " ".. v.diff .. s
 		else
-			print('else')
+			ZRA.d('else')
 		end
 	end
 	s = "Event Log (most recent at top)" .. s
@@ -265,11 +264,9 @@ function ZRA.onLoadUI()
 	gen_ass_btn:SetHeight(30)
 	gen_ass_btn:SetScript("OnClick", function()
 		if ZRA.current_tab == "Roles" then
-			--print('generating assignments for ' .. ZRA.current_tab)
 			ZRA.funcs.Roles()
 			ZRA.assignmentsModified("Roles", 0, "self")
 		else
-			--print('generating assignments for ' .. ZRA.current_tab .. ' ' .. ZRA.getDropdownName())
 			ZRA.funcs[ZRA.current_tab][ZRA.getDropdownName()]()
 			ZRA.assignmentsModified(ZRA.current_tab, ZRA.getDropdownInd(), "self")
 		end
@@ -417,7 +414,6 @@ function ZRA.clickDropDown()
 			local info = UIDropDownMenu_CreateInfo()
 			info.text = v.name
 			info.func = function (arg)
-				--print(arg.value)
 				UIDropDownMenu_SetSelectedName(ZRAFightDropDown, arg.value)
 				UIDropDownMenu_SetText(ZRAFightDropDown, arg.value)
 				if ZRA.assignmentsAreBlank(ZRA.current_tab or "Roles", ZRA.getDropdownInd()) then
