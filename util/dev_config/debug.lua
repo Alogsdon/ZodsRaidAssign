@@ -9,7 +9,7 @@ local geterrorhandler = geterrorhandler
 
 
 local charName = UnitName('player')
-if charName == 'Zodicus' or charName == 'Gahdzira' or charName == 'Zodicoos' or charName == 'Zoder' or charName == 'Charlean' or charName == 'Zods' then
+if charName == 'Hphehe' or charName == 'Zoder' or charName == 'Zods' then
     debug.enabled = true
     if (not IsAddOnLoaded("Blizzard_DebugTools")) then
         UIParentLoadAddOn("Blizzard_DebugTools")
