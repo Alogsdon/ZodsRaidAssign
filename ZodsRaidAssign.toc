@@ -1,11 +1,8 @@
 ## Title: ZodsRaidAssign
-## Interface: 11303
+## Interface: 30403
 ## Notes: raid assignment tool
 ## Author: Zodicus
-## Version: 1.05
+## Version: 2.00
 ## SavedVariables: ZRA_vars
 
-zra_schema.lua
-zra_bwl_schema.lua
 ZodsRaidAssign.lua
-ZRA_UI.lua
