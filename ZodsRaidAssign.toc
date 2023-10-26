@@ -3,8 +3,12 @@
 ## Notes: raid assignment tool
 ## Author: Zodicus
 ## Version: 2.00
+## Dependencies:
+## OptionalDeps: WoWUnit
 ## SavedVariables: ZRA_vars
 
 embeds.xml
+
+util\index.xml
 
 ZodsRaidAssign.lua
