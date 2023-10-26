@@ -12,3 +12,4 @@ embeds.xml
 util\index.xml
 
 ZodsRaidAssign.lua
+slash_handler.lua

@@ -2,6 +2,12 @@
 ..\FrameXML\UI.xsd">
 	<Script file="encounter.lua"/>
     <Script file="group_member.lua"/>
-
+    <Script file="combat_event_args_map.lua"/>
+    <Script file="combat_event_unit.lua"/>
+    <Script file="combat_event.lua"/>
+    <Script file="flags_helper.lua"/>
+    <Script file="macro_button.lua"/>
+    <Script file="selectable_macro.lua"/>
+    <Script file="raid_select_macro.lua"/>
     
 </Ui>

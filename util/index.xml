@@ -4,5 +4,7 @@
 	<Script file="object.lua"/>
 	<Script file="collection.lua"/>
 	<Script file="general.lua"/>
+	<Script file="class_factory.lua"/>
+	<Script file="flat_map.lua"/>
 	<Include file="wow_helpers/index.xml"/>
 </Ui>

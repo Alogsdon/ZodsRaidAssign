@@ -4,4 +4,5 @@
 	<Script file="debug.lua"/>
 	<Script file="test_helper.lua"/>
 	<Script file="on_init.lua"/>
+	<Script file="quest.lua"/>
 </Ui>
