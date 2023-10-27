@@ -52,6 +52,18 @@ function CombatEvent:spellName()
     return self:readArg('spellName')
 end
 
+function CombatEvent:spellId()
+    return self:readArg('spellId')
+end
+
+function CombatEvent:destGUID()
+    return self:readArg('destGUID')
+end
+
+function CombatEvent:destName()
+    return self:readArg('destName')
+end
+
 function CombatEvent:readArg(key)
     local ind = self.argmap:getInd(key)
     if ind then
@@ -75,6 +87,19 @@ function CombatEvent:Dest()
 
     self.dest = wow_helpers.CombatEventUnit.create(self:DestArgs())
     return self.dest
+end
+
+function CombatEvent:AbsorbAmount()
+    -- good job blizzard. 20+ positional arguments. AND YOU MAKE THREE IN THE MIDDLE OPTIONAL!?!?? dumb as hell
+    if self.subevent == 'SPELL_ABSORBED' then
+        return self.args[22] or self.args[19]
+    else
+        return 0
+    end
+end
+
+function CombatEvent:DamageAmount()
+    return self.args[15] or self.args[12]
 end
 
 function CombatEvent:DestArgs()

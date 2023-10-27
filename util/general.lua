@@ -19,3 +19,11 @@ function present(o)
     return not util.blank(o)
 end
 
+function indexOf(array, value)
+    for i, v in pairs(array) do
+        if v == value then
+            return i
+        end
+    end
+    return nil
+end

@@ -13,3 +13,7 @@ util\index.xml
 
 ZodsRaidAssign.lua
 slash_handler.lua
+incoming_heals_fix.lua
+heal_suggest.lua
+shields.lua
+incoming_damage.lua
